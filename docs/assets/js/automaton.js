@@ -171,6 +171,39 @@
     return Fo.fmt(ast, { numberedParams: A.params.length > 1 });
   }
 
+  // Auto-Layout: BFS-Tiefe als Spalte, Reihenfolge des Auftretens als Zeile.
+  function autoLayout(A) {
+    const pos = {};
+    const depth = new Map([[A.initial, 0]]);
+    const queue = [A.initial];
+    const order = [A.initial];
+    while (queue.length) {
+      const q = queue.shift();
+      for (const t of A.transitions) {
+        if (t.from !== q || depth.has(t.to)) continue;
+        depth.set(t.to, depth.get(q) + 1);
+        order.push(t.to);
+        queue.push(t.to);
+      }
+    }
+    for (const s of A.states) if (!depth.has(s)) { depth.set(s, 0); order.push(s); }
+    const rowOf = new Map();
+    for (const s of order) {
+      const d = depth.get(s);
+      const r = rowOf.has(d) ? rowOf.get(d) : 0;
+      rowOf.set(d, r + 1);
+      pos[s] = { x: d, y: r };
+    }
+    return pos;
+  }
+
+  function layoutOf(A) {
+    const auto = autoLayout(A);
+    const pos = {};
+    for (const s of A.states) pos[s] = A.pos[s] || auto[s] || { x: 0, y: 0 };
+    return pos;
+  }
+
   // ---------- Wörter ----------
 
   function parseWord(A, src) {
@@ -666,6 +699,7 @@
   root.Automaton = {
     parseDSL: parseDSL, toDSL: toDSL, cloneAutomaton: cloneAutomaton,
     displayState: displayState, displayFormula: displayFormula, splitTuple: splitTuple,
+    autoLayout: autoLayout, layoutOf: layoutOf,
     parseWord: parseWord, formatWord: formatWord,
     theoryForWord: theoryForWord, theoryAbstract: theoryAbstract,
     simulate: simulate, runsOf: runsOf, isSDPAOnWord: isSDPAOnWord,

@@ -5,6 +5,7 @@
   const Au = window.Automaton;
   const Ex = window.Examples;
   const D = window.Draw;
+  const Fo = window.Formula;
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -398,6 +399,46 @@
     }
   }
 
+  // ---------- Familien mit Parameter n ----------
+
+  function bellNumber(n) {
+    // Dreieck von Peirce
+    let row = [1];
+    for (let i = 1; i <= n; i++) {
+      const next = [row[row.length - 1]];
+      for (const x of row) next.push(next[next.length - 1] + x);
+      row = next;
+    }
+    return row[0];
+  }
+
+  $('famN').addEventListener('input', function () { $('famNLabel').textContent = this.value; });
+
+  document.querySelectorAll('[data-fam]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const n = parseInt($('famN').value, 10);
+      const kind = this.getAttribute('data-fam');
+      const target = $('opSlot').value;
+      let note = '';
+      if (kind === 'epa') {
+        $('dsl' + target).value = Ex.epaFamily(n);
+        note = 'A' + Fo.sub(n) + ' erkennt die Potenzen eines Wortes der Länge ' + n +
+          '. Die Schranke aus dem ATVA-Theorem ist n·B' + Fo.sub(n) + ' = ' +
+          n + '·' + bellNumber(n) + ' = ' + (n * bellNumber(n)) + '.';
+      } else {
+        $('dsl' + target).value = Ex.cffsa(n);
+        const dfa = Math.pow(2, n);
+        note = 'Der ' + n + '-te Buchstabe von hinten ist ein b. Der minimale DFA hat ' + dfa +
+          ' Zustände, diese CFPA-Form ' + (3 * (n + 1) - 1) + '.';
+      }
+      $('ex' + target).value = '';
+      refresh(target);
+      state.which = target;
+      redraw();
+      $('famNote').textContent = note;
+    });
+  });
+
   // ---------- Teilen ----------
 
   $('mkLink').addEventListener('click', function () {
@@ -409,6 +450,16 @@
     history.replaceState(null, '', '#' + parts.join('&'));
     $('linkOut').textContent = url;
     if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+  });
+
+  $('mkTikz').addEventListener('click', function () {
+    const A = currentAutomaton();
+    const ta = $('tikzOut');
+    if (!A) { ta.style.display = 'none'; return; }
+    ta.value = window.Tikz.exportTikz(A, { title: 'Slot ' + state.which });
+    ta.style.display = '';
+    ta.select();
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(function () {});
   });
 
   function loadFromHash() {

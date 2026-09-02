@@ -188,7 +188,8 @@ async function main() {
       return r.result.value;
     }
 
-    check(page + ': keine Konsolenfehler', logs.length === 0, logs.join(' | '));
+    check(page + ': keine Konsolenfehler beim Laden', logs.length === 0, logs.join(' | '));
+    const logsAtLoad = logs.length;
 
     if (page === 'playground.html') {
       const st = await evaluate(`(function(){
@@ -224,6 +225,41 @@ async function main() {
       })()`);
       check('playground: Produkt hat 5 Zustaende', prod.states === 5, 'gezeichnet: ' + prod.states + ' / ' + prod.note);
       check('playground: Produkt-DSL enthaelt Tupelzustaende', /\(q0,r0\)/.test(prod.dsl), prod.dsl.slice(0, 120));
+
+      // Familien-Slider und TikZ-Export
+      const famC = await evaluate(`(function(){
+        document.getElementById('famN').value = '3';
+        document.getElementById('famN').dispatchEvent(new Event('input'));
+        document.querySelector('[data-fam="cffsa"]').click();
+        return { dsl: document.getElementById('dslB').value,
+                 note: document.getElementById('famNote').textContent,
+                 states: document.querySelectorAll('#graph .state').length,
+                 label: document.getElementById('famNLabel').textContent };
+      })()`);
+      check('playground: Slider-Label folgt', famC.label === '3', famC.label);
+      check('playground: cffsa(3) erzeugt', /q3/.test(famC.dsl), famC.dsl.slice(0, 80));
+      check('playground: DFA-Groesse genannt', /8 Zust/.test(famC.note), famC.note);
+      check('playground: cffsa(3) hat 11 Zustaende', famC.states === 11, String(famC.states));
+
+      const famE = await evaluate(`(function(){
+        document.querySelector('[data-fam="epa"]').click();
+        return { dsl: document.getElementById('dslB').value,
+                 note: document.getElementById('famNote').textContent,
+                 states: document.querySelectorAll('#graph .state').length };
+      })()`);
+      check('playground: epaFamily(3) erzeugt', /x = y3/.test(famE.dsl), famE.dsl.slice(0, 120));
+      check('playground: Bell-Schranke genannt', /3·5 = 15/.test(famE.note), famE.note);
+      check('playground: EPA-Familie mit 3 Zustaenden gezeichnet', famE.states === 3, String(famE.states));
+
+      const tikz = await evaluate(`(function(){
+        document.getElementById('dslA').value = Examples.byId('C3').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('showA').click();
+        document.getElementById('mkTikz').click();
+        return document.getElementById('tikzOut').value;
+      })()`);
+      check('playground: TikZ enthaelt tikzpicture', /\\begin\{tikzpicture\}/.test(tikz), tikz.slice(0, 120));
+      check('playground: TikZ enthaelt alle 4 Zustaende', (tikz.match(/\\node\[/g) || []).length === 4, tikz.slice(0, 300));
 
       // Pruefung durchklicken
       const chk = await evaluate(`(function(){
@@ -312,6 +348,10 @@ async function main() {
       }
       check(page + ': alle internen Links existieren', bad.length === 0, bad.join(', '));
     }
+
+    // Fehler, die erst durch die Klicks oben ausgeloest wurden.
+    check(page + ': keine Konsolenfehler bei der Bedienung',
+      logs.length === logsAtLoad, logs.slice(logsAtLoad).join(' | '));
 
     await send('Target.closeTarget', { targetId: t.targetId });
   }

@@ -157,4 +157,39 @@ H.eq('XOR-konsistent', String(Au.checkCFPAConsistency(D, { maxLen: 4, grid: ['0'
 H.eq('leeres Wort: komplement-akzeptiert via q0',
   String(Au.simulate(D, []).complementAccepted), 'true');
 
+H.group('TikZ-Export');
+const Tz = globalThis.Tikz;
+for (const e of Ex.all) {
+  const A = Au.parseDSL(e.dsl);
+  let tex;
+  try { tex = Tz.exportTikz(A, { title: e.id }); }
+  catch (err) { H.check(e.id + ': TikZ-Export', false, err.message); continue; }
+  H.check(e.id + ': TikZ-Export', true);
+  // Ein Knoten pro Zustand, eine edge-Anweisung pro Zustandspaar.
+  const nodes = (tex.match(/\\node\[/g) || []).length;
+  H.eq(e.id + ': ein Knoten pro Zustand', String(nodes), String(A.states.length));
+  const edges = (tex.match(/\bedge/g) || []).length;
+  const pairs = new Set(A.transitions.map(function (t) { return t.from + '->' + t.to; })).size;
+  H.eq(e.id + ': eine edge-Anweisung pro Zustandspaar', String(edges), String(pairs));
+  // Kein Unicode-Rest, der in LaTeX scheitern wuerde.
+  const bad = tex.match(/[≤≥≠∧∨¬⊤⊥·−₀-₉]/g);
+  H.check(e.id + ': kein Unicode im TeX', !bad, bad ? bad.join('') : '');
+  // Balancierte Umgebung
+  const b = tex.indexOf('\\begin{tikzpicture}');
+  H.check(e.id + ': begin/end paarig', b >= 0 && tex.indexOf('\\end{tikzpicture}') > b);
+}
+// Rollen der Zustaende landen in den tikz-Optionen wie in den Abbildungen der Paper.
+const tz = Tz.exportTikz(Au.parseDSL(Ex.byId('C3').dsl));
+H.check('TikZ: initial markiert', /initial/.test(tz), tz.slice(0, 200));
+H.check('TikZ: accepting markiert', /accepting/.test(tz));
+H.check('TikZ: complement blau', /fill=blue!30/.test(tz));
+H.check('TikZ: Formeln in Mathe-Modus', /\$y \\leq x/.test(tz), tz.slice(0, 400));
+// Schwache Zustaende gestrichelt: C3 hat keine, A2pB schon.
+H.check('TikZ: schwach gestrichelt', /dashed/.test(Tz.exportTikz(Au.parseDSL(Ex.byId('CFFSA2').dsl))));
+// Tupelzustaende ergeben gueltige Knotennamen ohne Klammern.
+const tzp = Tz.exportTikz(Au.parseDSL(Ex.byId('A2pB').dsl));
+H.check('TikZ: Tupelnamen bereinigt', /\(n_q0_r0_\)/.test(tzp), tzp.slice(0, 400));
+H.check('TikZ: Tupel im Label mit Indizes', /\$\(q_0,r_0\)\$/.test(tzp), tzp.slice(0, 400));
+
+
 process.exit(H.report());

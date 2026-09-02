@@ -33,6 +33,7 @@ docs/assets/js/
   automaton.js       DSL, Simulation, Leerheit, Determinismus, Produkte, Checks
   examples.js        Beispielkatalog aus beiden Papern
   positions-core.js  Positionen, Nachfolgermatrizen, BFS
+  tikz.js            Export als tikz-Bild im Stil der Paper
   draw.js            SVG-Rendering
   playground.js      UI des Playgrounds
   positions.js       UI der Positions-Seite
@@ -44,10 +45,11 @@ docs/assets/js/
 node test/run-all.js
 ```
 
-Vier Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,
+Fuenf Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,
 Produkte, Entscheidungsverfahren), Positionen (Matrizen aus ATVA, Simulation gegen
-Matrixformel auf zufälligen 1-VA) und Seitentests, die die HTML-Seiten in headless Chrome
-laden und durchklicken. Ohne installiertes Chrome überspringt die letzte Suite sich selbst.
+Matrixformel auf zufälligen 1-VA), Beispiele (jedes Beispiel gegen seine Sprache, plus
+TikZ-Export) und Seitentests, die die HTML-Seiten in headless Chrome laden und
+durchklicken; sie melden auch Konsolenfehler, die erst durch die Klicks entstehen. Ohne installiertes Chrome überspringt die letzte Suite sich selbst.
 
 ## Was exakt ist
 

@@ -48,6 +48,19 @@
       </div>
 
       <div class="panel">
+        <h2>Familien mit Parameter n</h2>
+        <div class="field-row">
+          <label>n = <input type="range" id="famN" min="1" max="5" value="2" style="width:8rem"></label>
+          <span class="mono" id="famNLabel">2</span>
+        </div>
+        <div class="btn-row">
+          <button data-fam="epa">EPA-Familie A<sub>n</sub></button>
+          <button data-fam="cffsa">FSA als CFPA</button>
+        </div>
+        <p class="hint" id="famNote"></p>
+      </div>
+
+      <div class="panel">
         <h2>Operationen</h2>
         <p class="hint" id="opTarget">Das Ergebnis landet in:
           <select id="opSlot"><option value="A">Slot A</option><option value="B" selected>Slot B</option></select>
@@ -134,8 +147,10 @@
         <h2>Teilen</h2>
         <div class="btn-row">
           <button id="mkLink">Link mit A, B und Wort erzeugen</button>
+          <button id="mkTikz">TikZ-Export des gezeigten Graphen</button>
         </div>
         <p class="hint" id="linkOut"></p>
+        <textarea id="tikzOut" class="small" spellcheck="false" style="display:none" readonly></textarea>
       </div>
 
       <div class="panel">
@@ -165,6 +180,7 @@
 <script src="assets/js/automaton.js"></script>
 <script src="assets/js/examples.js"></script>
 <script src="assets/js/draw.js"></script>
+<script src="assets/js/tikz.js"></script>
 <script src="assets/js/playground.js"></script>
 </body>
 </html>
