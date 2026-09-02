@@ -322,6 +322,27 @@ async function main() {
       check('playground: Verdikt trotzdem gesetzt', /akzeptiert/.test(noParams.verdict), noParams.verdict);
       check('playground: Graph passt in die viewBox', noParams.fits, 'Inhalt ragt heraus');
 
+      // Automaten verschiedener Theorien vergleichen: verstaendliche Meldung statt
+      // eines BigInt-Fehlers aus dem Inneren der Rechnung.
+      const mixed = await evaluate(`(function(){
+        document.getElementById('dslA').value = Examples.epaFamily(2);
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('dslB').value = Examples.byId('B').dsl;
+        document.getElementById('dslB').dispatchEvent(new Event('input'));
+        document.getElementById('checkOut').innerHTML = '';
+        document.querySelector('[data-check="equiv"]').click();
+        document.querySelector('[data-check="skolem"]').click();
+        const txt = document.getElementById('checkOut').textContent;
+        document.querySelector('[data-op="sync"]').click();
+        return { checks: txt, op: document.getElementById('opNote').textContent };
+      })()`);
+      check('playground: kein BigInt-Fehler bei gemischten Theorien',
+        !/BigInt/.test(mixed.checks), mixed.checks.slice(0, 200));
+      check('playground: Meldung nennt die Theorien',
+        /verschiedene Theorien/.test(mixed.checks), mixed.checks.slice(0, 200));
+      check('playground: auch das Produkt lehnt sauber ab',
+        /verschiedene Theorien/.test(mixed.op), mixed.op.slice(0, 200));
+
       // Beim Laden aus dem Hash soll das Dropdown das erkannte Beispiel zeigen.
       const hashSel = await evaluate(`(async function(){
         const hash = await Share.encode({ a: Examples.byId('CFFSA2').dsl, b: '', w: 'ba' });

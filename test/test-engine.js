@@ -195,6 +195,43 @@ const V = load('V');
 const uniV = Au.checkUniversality(V, { maxLen: 6 });
 H.eq('V universell bis Länge 6', String(uniV.universal), 'true');
 
+H.group('Operationen mit zwei Automaten lehnen Unvergleichbares ab');
+const epa = Au.parseDSL(Ex.epaFamily(2));   // Gleichheit
+function rejects(name, fn) {
+  let msg = '';
+  try { const r = fn(); msg = (r && r.reason) || 'kein Fehler'; }
+  catch (e) { msg = e.message; }
+  H.check(name, /verschiedene Theorien/.test(msg), msg);
+}
+rejects('A ≡ B', function () { return Au.checkEquivalence(epa, B, { maxLen: 3 }); });
+rejects('Skolem', function () { return Au.checkSkolem(epa, B, { maxLen: 3 }); });
+rejects('synchronisiertes Produkt', function () { return Au.synchronizedProduct(epa, B); });
+rejects('Schnitt', function () { return Au.intersectionProduct(epa, B); });
+rejects('Vereinigung', function () { return Au.unionProduct(epa, B); });
+
+// Gleiche Theorie, aber unterschiedliche Konstanten: der Skolem-Vergleich waere sonst
+// ein Vergleich von Klassentupeln verschiedener Bedeutung.
+const konstA = Au.parseDSL('theory equality\nstates s0\ninitial s0\naccepting s0\ns0 -> s0 : x = a');
+const konstB = Au.parseDSL('theory equality\nstates t0\ninitial t0\naccepting t0\nt0 -> t0 : x = b');
+H.check('Skolem verlangt gleiche Konstanten',
+  /dieselben Konstanten/.test(Au.checkSkolem(konstA, konstB, { maxLen: 3 }).reason || ''),
+  JSON.stringify(Au.checkSkolem(konstA, konstB, { maxLen: 3 })));
+const paramA = Au.parseDSL('theory equality\nstates s0 s1\ninitial s0\naccepting s1\ns0 -> s1 : x = y1');
+const paramB = Au.parseDSL('theory equality\nstates t0 t1\ninitial t0\naccepting t1\nt0 -> t1 : x = y1\nt1 -> t1 : x = y2');
+H.check('Skolem verlangt gleiche Parameter',
+  /dieselben Parameter/.test(Au.checkSkolem(paramA, paramB, { maxLen: 3 }).reason || ''),
+  JSON.stringify(Au.checkSkolem(paramA, paramB, { maxLen: 3 })));
+
+// Die Wortaufzählung für ein Paar kennt die Konstanten beider Automaten.
+const pairWords = Au.wordsForPair(konstA, konstB, { maxLen: 2 });
+H.check('Aufzählung enthält beide Konstanten',
+  pairWords.some(function (w) { return w.join('') === 'a'; }) &&
+  pairWords.some(function (w) { return w.join('') === 'b'; }),
+  pairWords.map(function (w) { return w.join('') || 'ε'; }).join(' '));
+// Und damit findet die Äquivalenzprüfung den Unterschied.
+const konstEq = Au.checkEquivalence(konstA, konstB, { maxLen: 2 });
+H.eq('unterschiedliche Konstanten ⇒ nicht äquivalent', String(konstEq.equivalent), 'false');
+
 H.group('Größtes F_c (Gleichheitstheorie)');
 const lastnew = load('VAlastnew');
 const fc = Au.largestFc(lastnew);

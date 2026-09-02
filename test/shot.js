@@ -149,7 +149,16 @@ async function main() {
   await send('Page.navigate', { url: 'http://127.0.0.1:' + port + '/' + page }, sid);
   await wait(1500);
 
-  if (page === 'playground.html') {
+  // Optional: vor dem Screenshot einen Knopf klicken, z.B. --click=equiv
+  const clickArg = process.argv.find(function (a) { return a.indexOf('--click=') === 0; });
+  if (clickArg) {
+    const what = clickArg.slice(8);
+    await send('Runtime.evaluate', {
+      expression: "document.querySelector('[data-check=\"" + what + "\"]').click()",
+      awaitPromise: true
+    }, sid);
+    await wait(600);
+  } else if (page.indexOf('playground.html') === 0) {
     await send('Runtime.evaluate', {
       expression: "document.getElementById('mkLink').click()", awaitPromise: true
     }, sid);

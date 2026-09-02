@@ -462,7 +462,7 @@
   function productRaw(A, B, opts) {
     opts = opts || {};
     const shift = opts.shiftB ? A.params.length : 0;
-    if (A.theory !== B.theory) throw new Error('Beide Automaten müssen dieselbe Theorie benutzen');
+    requireSameTheory(A, B);
     const C = {
       theory: A.theory, states: [], initial: pairName(A.initial, B.initial),
       accepting: [], complement: [], transitions: [], pos: {},
@@ -644,8 +644,29 @@
     return { universal: true, checked: words.length, witness: null };
   }
 
+  // Zwei Automaten sind nur vergleichbar, wenn sie über derselben Struktur laufen.
+  // Sonst landen Buchstaben der einen Theorie in der Auswertung der anderen.
+  function requireSameTheory(A, B) {
+    if (A.theory === B.theory) return;
+    const name = { reals: 'reelle Zahlen', equality: 'Gleichheit' };
+    throw new Error('A und B benutzen verschiedene Theorien (' + name[A.theory] + ' gegen ' +
+      name[B.theory] + '). Sie lesen verschiedene Alphabete und sind nicht vergleichbar.');
+  }
+
+  // Für den Vergleich zweier Automaten müssen die Konstanten beider im Alphabet
+  // vorkommen, sonst prüft die Aufzählung Wörter, die B gar nicht unterscheiden kann.
+  function wordsForPair(A, B, opts) {
+    if (A.theory === 'reals') return enumerateWords(A, opts);
+    const consts = A.constants.slice();
+    for (const c of B.constants) if (consts.indexOf(c) < 0) consts.push(c);
+    consts.sort();
+    const maxLen = (opts && opts.maxLen !== undefined) ? opts.maxLen : 5;
+    return enumerateEqualityWords(consts, maxLen);
+  }
+
   function checkEquivalence(A, B, opts) {
-    const words = enumerateWords(A, opts);
+    requireSameTheory(A, B);
+    const words = wordsForPair(A, B, opts);
     for (const w of words) {
       const ra = simulate(A, w), rb = simulate(B, w);
       if (ra.accepted !== rb.accepted) {
@@ -661,17 +682,34 @@
   // Skolem-Bedingung 3 (CIAA Def. skolem): für w ∈ L(A) und μ ∈ L(B_μ) muss w ∈ L(A_μ).
   // Verletzt ⇔ S_A ≠ ∅ und diff(S_B, S_A) ≠ ∅.
   function checkSkolem(A, B, opts) {
+    requireSameTheory(A, B);
     for (const p of A.params) if (B.params.indexOf(p) < 0) {
       return { ok: false, reason: 'Bedingung 2 verletzt: Parameter y' + p + ' von A fehlt in B' };
     }
-    const words = enumerateWords(A, opts);
+    // Die Parametermengen von A und B werden gleich dargestellt und direkt verglichen.
+    // In der Gleichheitstheorie hängt die Darstellung an der Parameterliste und am
+    // Alphabet; beides muss deshalb übereinstimmen, sonst vergleicht diff Tupel
+    // verschiedener Länge und liefert stillschweigend Unsinn.
+    if (A.theory === 'equality') {
+      if (A.params.join(',') !== B.params.join(',')) {
+        return { ok: false, reason: 'A und B müssen dieselben Parameter benutzen (A: ' +
+          (A.params.map(function (p) { return 'y' + p; }).join(', ') || 'keine') + ', B: ' +
+          (B.params.map(function (p) { return 'y' + p; }).join(', ') || 'keine') + ')' };
+      }
+      if (A.constants.join(',') !== B.constants.join(',')) {
+        return { ok: false, reason: 'A und B müssen dieselben Konstanten benutzen (A: ' +
+          (A.constants.join(' ') || 'keine') + ', B: ' + (B.constants.join(' ') || 'keine') + ')' };
+      }
+    }
+
+    const words = wordsForPair(A, B, opts);
     for (const w of words) {
       const ra = simulate(A, w);
       if (!ra.accepted) continue;
       const rb = simulate(B, w);
-      // Für den Vergleich brauchen beide dieselbe Theorie-Instanz: in der Gleichheits-
-      // theorie hängt sie vom Wort ab, ist also für A und B identisch, solange die
-      // Konstanten übereinstimmen.
+      // Beide Simulationen haben nach den Prüfungen oben dieselbe Theorie-Instanz:
+      // in der Gleichheitstheorie hängt sie nur vom Wort, den Parametern und den
+      // Konstanten ab, in der reellen Theorie gibt es nichts zu unterscheiden.
       const th = ra.theory;
       const d = th.diff(rb.acceptSet, ra.acceptSet);
       if (!th.isEmpty(d)) {
@@ -710,6 +748,7 @@
     largestFc: largestFc, outgoing: outgoing,
     enumerateWords: enumerateWords, enumerateEqualityWords: enumerateEqualityWords,
     enumerateRealWords: enumerateRealWords, DEFAULT_GRID: DEFAULT_GRID,
+    requireSameTheory: requireSameTheory, wordsForPair: wordsForPair,
     checkCFPAConsistency: checkCFPAConsistency, checkUniversality: checkUniversality,
     checkEquivalence: checkEquivalence, checkSkolem: checkSkolem, checkSDPA: checkSDPA
   };
