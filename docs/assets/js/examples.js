@@ -1,4 +1,4 @@
-// examples.js — Beispielkatalog aus beiden Papern (Plan 6).
+// examples.js: Beispielkatalog aus beiden Papern (Plan 6).
 (function (root) {
   'use strict';
 
@@ -9,7 +9,7 @@
 
   // ---------------- CIAA ----------------
 
-  add('A1', 'A₁ — nicht komplementierbar', 'CIAA, Fig. 1a',
+  add('A1', 'A₁: nicht komplementierbar', 'CIAA, Fig. 1a',
     'Unsortierte Wörter: irgendwo steht ein Buchstabe, der später unterboten wird.', `
 theory reals
 states q0 q1 q2
@@ -24,7 +24,7 @@ pos q1 1 0
 pos q2 2 0
 `, ['ciaa']);
 
-  add('A2', 'A₂ — letzter Buchstabe ist strikt der größte', 'CIAA, Fig. 2a',
+  add('A2', 'A₂: letzter Buchstabe ist strikt der größte', 'CIAA, Fig. 2a',
     'Alle Buchstaben vor dem letzten sind kleiner als y, der letzte ist y.', `
 theory reals
 states q0 q1
@@ -36,7 +36,7 @@ pos q0 0 0
 pos q1 1 0
 `, ['ciaa', 'atva']);
 
-  add('A2p', "A₂' — A₂ deterministisch per Belegung", 'CIAA, Fig. 4a',
+  add('A2p', "A₂': A₂ deterministisch per Belegung", 'CIAA, Fig. 4a',
     'Vervollständigung von A₂: q₂ fängt alles ab, was größer als y ist.', `
 theory reals
 states q0 q1 q2
@@ -52,7 +52,7 @@ pos q1 1 0
 pos q2 1 1
 `, ['ciaa']);
 
-  add('A3', 'A₃ — alle Buchstaben in einem Intervall der Länge 1', 'CIAA, Fig. 3',
+  add('A3', 'A₃: alle Buchstaben in einem Intervall der Länge 1', 'CIAA, Fig. 3',
     'Ein Zustand, eine Schleife: y ≤ x ≤ y+1.', `
 theory reals
 states q0
@@ -62,7 +62,7 @@ q0 -> q0 : y <= x <= y+1
 pos q0 0 0
 `, ['ciaa']);
 
-  add('A3p', "A₃' — A₃ deterministisch per Belegung", 'CIAA, Fig. 3b',
+  add('A3p', "A₃': A₃ deterministisch per Belegung", 'CIAA, Fig. 3b',
     'A₃ mit schwachem Auffangzustand q₁.', `
 theory reals
 states q0 q1
@@ -75,7 +75,7 @@ pos q0 0 0
 pos q1 1 0
 `, ['ciaa']);
 
-  add('C3', 'C₃ — CFPA für L(A₃)', 'CIAA, Fig. 3c',
+  add('C3', 'C₃: CFPA für L(A₃)', 'CIAA, Fig. 3c',
     'y muss das Minimum des Wortes sein; p₃ erkennt das Komplement.', `
 theory reals
 states p0 p1 p2 p3
@@ -96,7 +96,7 @@ pos p2 0 1
 pos p3 2 1
 `, ['ciaa', 'cfpa']);
 
-  add('D', 'D — SDPA: erster und letzter Buchstabe stimmen überein', 'CIAA, Fig. 6',
+  add('D', 'D: SDPA: erster und letzter Buchstabe stimmen überein', 'CIAA, Fig. 6',
     'Stark deterministisch. F_c = Q ∖ F, weil SDPA keine schwachen Zustände haben; ' +
     'q₀ gehört dazu, weil das leere Wort den leeren Lauf in q₀ vollendet.', `
 theory reals
@@ -114,7 +114,7 @@ pos q1 1 0
 pos q2 2 0
 `, ['ciaa', 'sdpa']);
 
-  add('B', "B — Skolem-Automat für A₂'", 'CIAA, Fig. 4b',
+  add('B', "B: Skolem-Automat für A₂'", 'CIAA, Fig. 4b',
     'Universell; akzeptiert w mit μ genau dann, wenn y der letzte Buchstabe ist (oder w leer).', `
 theory reals
 states r0 r1
@@ -128,7 +128,7 @@ pos r0 0 0
 pos r1 1 0
 `, ['ciaa', 'skolem']);
 
-  add('A2pB', "A₂' ⊗ B — synchronisiertes Produkt", 'CIAA, Fig. 5',
+  add('A2pB', "A₂' ⊗ B: synchronisiertes Produkt", 'CIAA, Fig. 5',
     'Erwartetes Ergebnis der Produktoperation nach Vereinfachung und Entfernen von (q₁,r₁).', `
 theory reals
 states (q0,r0) (q0,r1) (q1,r0) (q2,r0) (q2,r1)
@@ -180,7 +180,7 @@ s1 -> s2 : x = a or x = b
 
   // ---------------- ATVA ----------------
 
-  add('V', 'V — universelles 1-VA', 'ATVA, Ex. "position"',
+  add('V', 'V: universelles 1-VA', 'ATVA, Ex. "position"',
     'Absichtlich universell. Paritätsargument: der erste Buchstabe führt nach q₂, danach hält ' +
     'y in q₂ und q₃, z wechselt zwischen ihnen.', `
 theory equality
@@ -309,17 +309,17 @@ pos q1 1 0
   // nirgends im UI, deshalb ist sie hier nicht doppelt gefuehrt. Die Formelnamen
   // (A₁, C₃, ...) und die Quellenangaben bleiben in beiden Sprachen gleich.
   const TITLE_EN = {
-    A1: 'A₁ — not complementable',
-    A2: 'A₂ — last letter is strictly the largest',
-    A2p: "A₂' — A₂ deterministic per assignment",
-    A3: 'A₃ — all letters within an interval of length 1',
-    A3p: "A₃' — A₃ deterministic per assignment",
-    C3: 'C₃ — CFPA for L(A₃)',
-    D: 'D — SDPA: first and last letter agree',
-    B: "B — Skolem automaton for A₂'",
-    A2pB: "A₂' ⊗ B — synchronized product",
+    A1: 'A₁: not complementable',
+    A2: 'A₂: last letter is strictly the largest',
+    A2p: "A₂': A₂ deterministic per assignment",
+    A3: 'A₃: all letters within an interval of length 1',
+    A3p: "A₃': A₃ deterministic per assignment",
+    C3: 'C₃: CFPA for L(A₃)',
+    D: 'D: SDPA: first and last letter agree',
+    B: "B: Skolem automaton for A₂'",
+    A2pB: "A₂' ⊗ B: synchronized product",
     CFFSA2: 'Finite automaton as a CFPA (n = 2)',
-    V: 'V — universal 1-VA',
+    V: 'V: universal 1-VA',
     VAdouble: 'Some letter occurs twice',
     VAlastnew: 'Last letter does not occur before',
     EPA2: 'A₂ (EPA family, n = 2)'

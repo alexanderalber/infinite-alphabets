@@ -158,6 +158,31 @@ async function main() {
       awaitPromise: true
     }, sid);
     await wait(600);
+  } else if (process.argv.some(function (a) { return a === '--epa'; })) {
+    // Der Fall aus dem Bugreport: EPA-Familie mit n = 5 in Slot B, dazu ein Wort,
+    // das in der Gleichheitstheorie hunderte Klassen erzeugt.
+    await send('Runtime.evaluate', {
+      expression: "(function(){document.getElementById('famN').value=5;"
+        + "document.getElementById('opSlot').value='B';"
+        + "document.querySelector('[data-fam=\"epa\"]').click();"
+        + "var w=document.getElementById('word');w.value='1, 1/2, 8/5';"
+        + "w.dispatchEvent(new Event('input'));"
+        + "document.getElementById('stepAll').click();})()",
+      awaitPromise: true
+    }, sid);
+    await wait(800);
+  } else if (process.argv.some(function (a) { return a === '--info'; })) {
+    await send('Runtime.evaluate', {
+      expression: "document.querySelectorAll('.info-btn')[4].click()", awaitPromise: true
+    }, sid);
+    await wait(400);
+  } else if (process.argv.some(function (a) { return a === '--open-details'; })) {
+    // Alle <details> aufklappen: so ist im Bild zu sehen, ob das Layout dabei springt.
+    await send('Runtime.evaluate', {
+      expression: "document.querySelectorAll('details').forEach(function(d){d.open=true;})",
+      awaitPromise: true
+    }, sid);
+    await wait(400);
   } else if (page.indexOf('playground.html') === 0) {
     await send('Runtime.evaluate', {
       expression: "document.getElementById('mkLink').click()", awaitPromise: true

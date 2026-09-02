@@ -1,7 +1,27 @@
+<!-- Favicon: Unendlichzeichen und Alpha teilen sich eine Form.
+     Beide bestehen aus einer geschlossenen linken Schlaufe; beim ∞ schliesst
+     sich die rechte ebenso, beim α laeuft sie als Bein nach rechts unten aus.
+     Gezeichnet ist genau dieser gemeinsame Zug: eine durchgehende Linie, die
+     als ∞ beginnt und deren rechte Haelfte offen ausschwingt. Wer ∞ erwartet,
+     liest ∞, wer α erwartet, liest α.
+
+     Weiss auf dem Grau des grey-Skins (#55595f), damit das Icon in der
+     Browserleiste neben den anderen Seiten von alber.me steht und nicht in
+     einer vierten Farbe. Kein Font, damit nichts von der Zielmaschine abhaengt. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#fbfaf8"/>
-  <circle cx="10" cy="16" r="6" fill="none" stroke="#1c1c1a" stroke-width="1.8"/>
-  <circle cx="24" cy="16" r="6" fill="#f6e7e6" stroke="#7a1f2b" stroke-width="1.8"/>
-  <circle cx="24" cy="16" r="3.6" fill="none" stroke="#7a1f2b" stroke-width="1.2"/>
-  <path d="M16.3 16 L17.6 16" stroke="#1c1c1a" stroke-width="1.6"/>
+  <rect width="32" height="32" rx="6" fill="#55595f"/>
+  <g fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Linke Schlaufe, geschlossen: die Haelfte, die ∞ und α gemeinsam haben. -->
+    <path d="M15.8 16
+             C 13.4 11.6, 8.2 11.6, 7.0 14.8
+             C 6.0 17.6, 8.2 20.8, 11.2 20.8
+             C 14.0 20.8, 15.2 18.4, 15.8 16" />
+    <!-- Rechte Haelfte: oben wie beim ∞ herum, unten laeuft sie als Bein des
+         α geradlinig nach rechts unten aus, statt sich zu schliessen. -->
+    <path d="M15.8 16
+             C 17.0 13.0, 20.4 11.0, 22.8 12.8
+             C 25.4 14.8, 25.0 19.2, 22.2 20.6
+             C 20.6 21.4, 18.6 20.8, 17.6 19.2" />
+    <path d="M17.6 19.2 L 25.2 23.2" />
+  </g>
 </svg>

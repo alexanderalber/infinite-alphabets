@@ -115,10 +115,13 @@ html[data-skin="grey"][data-skin="grey"][data-skin="grey"] {
   --tool-panel-shadow: none;
   /* In einem achromatischen Skin ist die einzige verbleibende Achse die
      Helligkeit, also bekommt sie das, was der Leser nicht uebersehen darf:
-     schlecht ist weiss, gut tritt zurueck. Info behaelt das Tuerkis. */
+     gut tritt zurueck, die Warnung liegt darueber. Info behaelt das Tuerkis.
+     Rot ist die ausdrueckliche Ausnahme vom achromatischen Skin: ein Konflikt
+     oder ein Parserfehler ist die eine Aussage, die auch hier ins Auge springen
+     soll. Der Ton ist so gewaehlt, dass er auf #55595f noch traegt. */
   --tool-sig-good: #b3babe;
   --tool-sig-warn: #d9dde0;
-  --tool-sig-bad:  #ffffff;
+  --tool-sig-bad:  #ff8a80;
   --tool-sig-info: #6fe3d2;
   /* Callouts verlieren ihre Farbe und behalten ihren Kasten. Der Schweregrad
      ist der Rand: durchgehend weiss beim Fehler, eine Stufe runter bei der
@@ -130,8 +133,8 @@ html[data-skin="grey"][data-skin="grey"][data-skin="grey"] {
   --tool-warn-border: #dfe3e5;
   --tool-warn-text:   #f2f4f5;
   --tool-danger-bg:     transparent;
-  --tool-danger-border: #ffffff;
-  --tool-danger-text:   #ffffff;
+  --tool-danger-border: #ff8a80;
+  --tool-danger-text:   #ff8a80;
   --tool-info-bg:     transparent;
   --tool-info-border: #6fe3d2;
   --tool-info-text:   #f2f4f5;
@@ -139,9 +142,16 @@ html[data-skin="grey"][data-skin="grey"][data-skin="grey"] {
   --page:   #55595f;
   --accent: #6fe3d2;
   --accent-hover: #93ece0;
-  --accent-soft:  transparent;
+  /* Tuerkis ist die einzige Farbe, die dieser Skin hat, und war vorher nur am
+     Rand zu sehen. Die weichen Toene sind jetzt eine sehr schwache Waesche
+     statt transparent: das gibt akzeptierenden Zustaenden im Graphen und der
+     aktiven Zeile wieder eine sichtbare Flaeche, ohne die Regel zu brechen,
+     denn das unterscheidende Merkmal bleibt die Form (Doppelkreis, Strichlung).
+     --blue-soft muss sich davon absetzen, weil beide im selben Graphen liegen:
+     komplement-akzeptierend bekommt deshalb die kraeftigere Waesche. */
+  --accent-soft:  rgba(111, 227, 210, .14);
   --blue:      #6fe3d2;
-  --blue-soft: transparent;
+  --blue-soft: rgba(111, 227, 210, .30);
 }
 
 /* Rollen, die der alte Code unter seinen Namen liest. Eine Ebene Indirektion,
@@ -159,6 +169,26 @@ html[data-skin="grey"][data-skin="grey"][data-skin="grey"] {
   --err:   var(--tool-sig-bad);
   --mono: "DejaVu Sans Mono", "Consolas", "Liberation Mono", monospace;
 }
+
+/* Scrollbalken. Ein Balken in Systemfarbe ist im grauen Skin ein blauer Streifen
+   neben lauter Achromatischem, und im hellen Skin ein dunkler Rahmen um eine
+   weisse Flaeche. Zwei Mechanismen, weil sie sich noch nicht ueberall decken:
+   das standardisierte scrollbar-color (Firefox, neuere Chromium) und die
+   ::-webkit-scrollbar-Pseudoelemente. Wer beide kann, bekommt das erste, weil
+   scrollbar-color die Pseudoelemente ausschaltet. */
+html {
+  scrollbar-color: var(--tool-border) var(--tool-panel);
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: var(--tool-panel); }
+::-webkit-scrollbar-thumb {
+  background: var(--tool-border);
+  border-radius: 6px;
+  border: 2px solid var(--tool-panel);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-corner { background: var(--tool-panel); }
 
 * { box-sizing: border-box; }
 
@@ -212,6 +242,64 @@ button,
   transition: background-color .12s ease, border-color .12s ease, color .12s ease,
     transform .06s ease;
 }
+/* Hausregel von alber.me: jede Schaltflaeche beginnt mit einem Icon. Das ist
+   das schnellste Merkmal, um Schaltflaechen von Auswahlsegmenten (.seg) und
+   Anzeigen (.badge) zu unterscheiden, noch vor Rahmen und Hover, und es traegt
+   auch im grauen Skin, wo die Farbe als Unterscheidung ausfaellt.
+
+   Das Icon kommt als CSS-Maske herein und wird in currentColor gefaerbt, wie
+   schon beim Theme-Umschalter: so folgt es Hover, :active und .primary ohne
+   eigene Regel und ohne eine zweite Farbe ins Bild zu bringen. Welches Icon,
+   sagt data-icon am Knopf; ohne Angabe steht ein neutraler Punkt da, damit ein
+   spaeter ergaenzter Knopf nicht als einziger ohne Icon dasteht.
+
+   .seg ist ausgenommen: dort waere ein Icon genau das Merkmal, das die beiden
+   Rollen wieder ununterscheidbar macht. */
+/* Kein Flex-Container: als Flex-Item wuerde jedes <sub> im Beschriftungstext zu
+   einer eigenen Box und verloere seine Grundlinie, aus "A<sub>n</sub>" wuerde
+   "A n". Der Text bleibt deshalb ein normaler Inline-Fluss, und das Icon ist
+   ein inline-block davor, das ueber vertical-align auf der Zeile sitzt. */
+button:not(.seg),
+.btn:not(.seg) {
+  white-space: nowrap;
+}
+button:not(.seg)::before,
+.btn:not(.seg)::before {
+  content: "";
+  display: inline-block;
+  vertical-align: -0.11em;
+  margin-right: 0.42em;
+  width: 0.92em;
+  height: 0.92em;
+  background-color: currentColor;
+  -webkit-mask: var(--icon, url('../img/icons/ui-dot.svg')) no-repeat center / contain;
+  mask: var(--icon, url('../img/icons/ui-dot.svg')) no-repeat center / contain;
+}
+button[data-icon="play"],       .btn[data-icon="play"]       { --icon: url('../img/icons/ui-play.svg'); }
+button[data-icon="check"],      .btn[data-icon="check"]      { --icon: url('../img/icons/ui-check.svg'); }
+button[data-icon="merge"],      .btn[data-icon="merge"]      { --icon: url('../img/icons/ui-merge.svg'); }
+button[data-icon="wand"],       .btn[data-icon="wand"]       { --icon: url('../img/icons/ui-wand.svg'); }
+button[data-icon="link"],       .btn[data-icon="link"]       { --icon: url('../img/icons/ui-link.svg'); }
+button[data-icon="code"],       .btn[data-icon="code"]       { --icon: url('../img/icons/ui-code.svg'); }
+button[data-icon="eraser"],     .btn[data-icon="eraser"]     { --icon: url('../img/icons/ui-eraser.svg'); }
+button[data-icon="skip-back"],  .btn[data-icon="skip-back"]  { --icon: url('../img/icons/ui-skip-back.svg'); }
+button[data-icon="skip-fwd"],   .btn[data-icon="skip-fwd"]   { --icon: url('../img/icons/ui-skip-forward.svg'); }
+button[data-icon="prev"],       .btn[data-icon="prev"]       { --icon: url('../img/icons/ui-chevron-left.svg'); }
+button[data-icon="next"],       .btn[data-icon="next"]       { --icon: url('../img/icons/ui-chevron-right.svg'); }
+button[data-icon="undo"],       .btn[data-icon="undo"]       { --icon: url('../img/icons/ui-undo.svg'); }
+button[data-icon="rotate"],     .btn[data-icon="rotate"]     { --icon: url('../img/icons/ui-rotate.svg'); }
+button[data-icon="layers"],     .btn[data-icon="layers"]     { --icon: url('../img/icons/ui-layers.svg'); }
+button[data-icon="plus"],       .btn[data-icon="plus"]       { --icon: url('../img/icons/ui-plus.svg'); }
+
+/* Knoepfe, die nur aus einem Icon bestehen (die Schrittleiste): der Text ist
+   dort ohnehin im title und im aria-label, das Icon traegt allein. */
+button.icon-only { padding-left: 0.55rem; padding-right: 0.55rem; }
+button.icon-only::before { width: 1.05em; height: 1.05em; margin-right: 0; }
+
+/* Das i am Panel ist ein Knopf, aber ein runder mit dem Buchstaben als Zeichen:
+   es traegt kein zweites Icon davor. */
+button.info-btn::before { content: none; }
+
 /* Der Druck-Effekt: einen halben Pixel tiefer beim Klicken. Kein Schatten, der
    sich bewegt, weil der graue Skin gar keinen hat und die Bewegung dort dann
    fehlen wuerde. */
@@ -383,6 +471,11 @@ main.prose pre code { background: none; padding: 0; }
 
 .cols { display: grid; gap: 1rem; grid-template-columns: minmax(320px, 30fr) minmax(360px, 42fr) minmax(300px, 28fr); align-items: start; }
 .cols-2 { display: grid; gap: 1rem; grid-template-columns: minmax(300px, 32fr) minmax(400px, 68fr); align-items: start; }
+/* Ein Grid-Kind hat als Mindestbreite die seines Inhalts, nicht die aus
+   minmax(). Ohne min-width:0 verbreitert deshalb alles, was beim Aufklappen
+   erscheint (die Matrizen, ein langer Zeuge), seine Spalte und schiebt die
+   beiden anderen zusammen: das Layout springt beim Klick auf den Aufklapper. */
+.cols > *, .cols-2 > * { min-width: 0; }
 @media (max-width: 1100px) { .cols, .cols-2 { grid-template-columns: 1fr; } }
 
 .panel {
@@ -441,8 +534,21 @@ textarea:focus-visible, input:focus-visible, select:focus-visible {
 .field-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
 .field-row label { font-size: 0.88rem; color: var(--tool-label); }
 
-.graph-wrap { border: 1px solid var(--tool-border); border-radius: 4px; background: var(--tool-surface); overflow: hidden; }
-svg.graph { display: block; width: 100%; height: auto; min-height: 220px; font-family: "Charter", "Georgia", serif; }
+/* Der Rahmen scrollt, statt abzuschneiden: draw.js klemmt den Zoom, damit die
+   Zustandskreise in beide Richtungen lesbar bleiben, und was bei kleinstem Zoom
+   immer noch breiter ist als die Spalte, faehrt hier heraus. max-height deckelt
+   hohe Graphen, damit das Panel nicht die Seite auseinanderzieht. */
+.graph-wrap {
+  border: 1px solid var(--tool-border);
+  border-radius: 4px;
+  background: var(--tool-surface);
+  overflow: auto;
+  max-height: 70vh;
+}
+/* Ohne Breitenattribut faellt das SVG auf die Spaltenbreite zurueck (Node-Test,
+   verstecktes Panel); mit Attribut gewinnt die von draw.js gesetzte Pixelgroesse. */
+svg.graph { display: block; max-width: none; min-height: 220px; font-family: "Charter", "Georgia", serif; margin: 0 auto; }
+svg.graph:not([width]) { width: 100%; height: auto; }
 
 svg.graph .state-body { fill: var(--tool-surface); stroke: var(--edge); stroke-width: 1.6; }
 svg.graph .state-inner { fill: none; stroke: var(--edge); stroke-width: 1.1; }
@@ -466,12 +572,14 @@ th, td { text-align: left; padding: 0.22rem 0.45rem; border-bottom: 1px solid va
 th { color: var(--tool-label); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
 td.mono, th.mono, .mono { font-family: var(--mono); font-size: 0.85rem; }
 
+/* Oberer Abstand, weil das Verdikt im Wort-Panel unmittelbar auf die
+   Schrittleiste folgt und ohne ihn an den Schaltflaechen klebt. */
 .verdict {
   padding: 0.5rem 0.7rem;
   border-radius: 4px;
   border: 1px solid var(--tool-hairline);
   background: var(--tool-subtle);
-  margin-bottom: 0.6rem;
+  margin: 0.7rem 0 0.6rem;
   font-size: 0.95rem;
   cursor: default;
 }
@@ -480,13 +588,78 @@ td.mono, th.mono, .mono { font-family: var(--mono); font-size: 0.85rem; }
 .verdict.none     { background: var(--tool-subtle);    border-color: var(--tool-hairline); }
 .verdict.conflict { background: var(--tool-danger-bg); border-color: var(--tool-danger-border); color: var(--tool-danger-text); font-weight: 600; }
 
+/* --- INFO-OVERLAY ---
+   Ein kleines i oben rechts im Panel, das knapp erklaert, wofuer der Block da
+   ist. Es ist eine Aktion, also ein Knopf, aber ein runder: der Kreis ist keine
+   vierte Kastenform, sondern die kleinste Ausfuehrung derselben Rolle, und er
+   sitzt ausserhalb des Textflusses, damit er nichts verschiebt.
+   Die Box ist bewusst nicht modal: ein Klick daneben oder Escape schliesst sie. */
+/* Spezifitaet absichtlich ueber die von button:not(.seg): jene Regel setzt
+   display, gap und Innenabstand fuer alle Schaltflaechen, und der runde
+   i-Knopf braucht seine eigenen Werte, sonst rutscht das i aus dem Kreis. */
+button.info-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.55rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--tool-note);
+  background: transparent;
+  border: 1px solid var(--tool-hairline);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+button.info-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+button.info-btn[aria-expanded="true"] {
+  color: var(--tool-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.info-box {
+  position: absolute;
+  top: 2rem;
+  right: 0.55rem;
+  z-index: 5;
+  width: min(24rem, calc(100% - 1.1rem));
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--tool-text);
+  background: var(--tool-panel);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: var(--tool-panel-shadow);
+}
+/* Im grauen Skin ist --tool-panel gleich der Seitenfarbe, das Overlay haette
+   also keinen Grund, sich vom Panel darunter abzuheben. Der Rahmen im Akzent
+   traegt es, und eine Spur Aufhellung gibt ihm Koerper. */
+html[data-skin="grey"] .info-box { background: var(--tool-subtle); }
+.info-box p { margin: 0 0 0.4rem; }
+.info-box p:last-child { margin-bottom: 0; }
+.info-box code { font-family: var(--mono); font-size: 0.9em; }
+
 .hint { font-size: 0.85rem; color: var(--tool-note); margin: 0.3rem 0 0; }
 .error { color: var(--tool-sig-bad); font-family: var(--mono); font-size: 0.85rem; white-space: pre-wrap; }
 .result-line { font-size: 0.88rem; margin: 0.25rem 0; }
 .result-line .tag { font-family: var(--mono); font-size: 0.78rem; color: var(--tool-note); }
 
+/* Schieberegler nehmen ohne accent-color das Blau des Betriebssystems und
+   stehen dann in jedem Skin daneben. Die Regel gilt global, nicht nur im
+   .stepper: der Regler fuer den Familienparameter steht in einer .field-row. */
+input[type="range"] { accent-color: var(--accent); }
+
 .stepper { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-.stepper input[type="range"] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.stepper input[type="range"] { flex: 1; min-width: 120px; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.82rem; color: var(--tool-note); margin-top: 0.5rem; }
 .legend span { display: flex; align-items: center; gap: 0.3rem; }
@@ -500,9 +673,15 @@ summary { cursor: pointer; font-size: 0.88rem; color: var(--tool-label); }
 summary:hover { color: var(--tool-emph); }
 details[open] summary { margin-bottom: 0.4rem; }
 
-.matrix { font-family: var(--mono); font-size: 0.8rem; border-collapse: collapse; }
-.matrix td { border: none; padding: 0.05rem 0.3rem; text-align: right; }
+/* Die Matrizen sitzen im aufklappbaren Teil der schmalsten Spalte. Ohne
+   width:auto zieht die Tabelle die Regel table{width:100%} von oben mit und
+   spreizt ihre Spalten ueber die ganze Panelbreite, was das Grid beim Aufklappen
+   sichtbar umbrechen laesst. Mit auto ist sie so breit wie ihr Inhalt, und
+   #matrices faengt den Rest ab, falls doch etwas Breiteres kommt. */
+.matrix { font-family: var(--mono); font-size: 0.8rem; border-collapse: collapse; width: auto; table-layout: auto; }
+.matrix td { border: none; padding: 0.02rem 0.22rem; text-align: right; white-space: nowrap; }
 .matrix .zero { color: var(--tool-faint); }
+#matrices { overflow-x: auto; }
 
 .vec { font-family: var(--mono); font-size: 0.9rem; }
 .vec .upper { color: var(--accent); }

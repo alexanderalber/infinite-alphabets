@@ -1,4 +1,4 @@
-// messages.js — Meldungen aus der Engine (Parser, Formeln, Positionen).
+// messages.js: Meldungen aus der Engine (Parser, Formeln, Positionen).
 //
 // Getrennt von strings.js, weil diese Texte aus Modulen kommen, die auch unter
 // Node laufen: die Tests laden automaton.js ohne eine Seite drumherum. Deshalb

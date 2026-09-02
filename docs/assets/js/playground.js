@@ -19,15 +19,21 @@
 
   // ---------- Beispielauswahl ----------
 
-  function fillExamples(sel, withEmpty) {
-    if (withEmpty) sel.appendChild(new Option(T().t('pg.ex.empty'), ''));
+  // Beide Slots bekommen den leeren Eintrag, und er heisst nicht mehr "leer".
+  // Der Wert '' bedeutet "kein Beispiel gewaehlt", nicht "Editor leer": er wird
+  // gesetzt, sobald jemand tippt oder eine Operation den Slot ueberschreibt, und
+  // dann steht dort sehr wohl der Code eines Automaten. Slot A hatte den Eintrag
+  // gar nicht, weshalb dort nach dem Tippen weiter das zuletzt gewaehlte Beispiel
+  // angezeigt wurde, obwohl im Editor etwas anderes stand.
+  function fillExamples(sel) {
+    sel.appendChild(new Option(T().t('pg.ex.custom'), ''));
     for (const e of Ex.all) {
       const o = new Option(Ex.title(e) + '  [' + e.source + ']', e.id);
       sel.appendChild(o);
     }
   }
-  fillExamples($('exA'), false);
-  fillExamples($('exB'), true);
+  fillExamples($('exA'));
+  fillExamples($('exB'));
 
   $('exA').addEventListener('change', function () {
     const e = Ex.byId(this.value);
@@ -103,6 +109,14 @@
     updateGridVisibility();
     const A = currentAutomaton();
     $('graphWhich').textContent = state.which;
+    // "zeichnen" waehlt aus, welcher Slot im Graphen steht, es fuehrt keine
+    // Aktion aus, die etwas veraendert. Also ist es nach der Affordanzregel ein
+    // .seg und kein Button, und der aktive Slot ist das aktive Segment. Als
+    // gefuellter .primary haette derselbe Knopf zwei Dinge gleichzeitig gesagt,
+    // "tu etwas" und "das siehst du gerade", und im Nachbarslot haette das
+    // danebenstehende "leeren" faelschlich wie das Gegenstueck ausgesehen.
+    $('showA').classList.toggle('active', state.which === 'A');
+    $('showB').classList.toggle('active', state.which === 'B');
     const svg = $('graph');
     if (!A) { while (svg.firstChild) svg.removeChild(svg.firstChild); return; }
     const highlight = new Map();
@@ -130,8 +144,11 @@
     const sel = ta.selectionStart;
     ta.value = lines.join('\n');
     ta.selectionStart = ta.selectionEnd = Math.min(sel, ta.value.length);
-    // Nicht neu zeichnen: der Zustand sitzt schon an der neuen Stelle.
-    try { state[slot] = Au.parseDSL(ta.value); } catch (e) { /* Fehler zeigt refresh */ }
+    try { state[slot] = Au.parseDSL(ta.value); } catch (e) { /* Fehler zeigt refresh */ return; }
+    // Neu zeichnen, obwohl der Kreis schon an der richtigen Stelle sitzt: Kanten,
+    // Selbstschleifen und Kantenlabels haengen an seiner Position und blieben
+    // sonst dort stehen, wo der Zustand vorher war.
+    if (slot === state.which) redraw();
   }
 
   // ---------- Simulation ----------
@@ -560,8 +577,8 @@
     const selA = $('exA').value, selB = $('exB').value;
     $('exA').innerHTML = '';
     $('exB').innerHTML = '';
-    fillExamples($('exA'), false);
-    fillExamples($('exB'), true);
+    fillExamples($('exA'));
+    fillExamples($('exB'));
     $('exA').value = selA;
     $('exB').value = selB;
     $('checkOut').innerHTML = '';

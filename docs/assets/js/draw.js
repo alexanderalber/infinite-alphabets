@@ -112,8 +112,12 @@
       if (hot) {
         const txt = opts.highlight.get(s);
         if (txt) {
-          const t = el('text', { class: 'state-set', 'text-anchor': 'middle', y: R + 16 }, txt);
-          g.appendChild(t);
+          // Die Parametermenge kann sehr lang werden (Hunderte Klassen in der
+          // Gleichheitstheorie). Ungekuerzt bestimmt sie die Breite der viewBox,
+          // der Automat schrumpft daneben zur Linie. Also gekuerzt und auf
+          // mehrere Zeilen: die vollstaendige Menge steht in der Tabelle unter
+          // dem Graphen, hier genuegt der Anfang als Wiedererkennung.
+          setLabelLines(g, clampSet(txt), R + 16);
         }
       }
       if (opts.tokens && opts.tokens.has(s)) {
@@ -132,16 +136,78 @@
     return { px: px, width: W, height: Hh };
   }
 
+  // Zoomgrenzen. Ohne sie skaliert ein SVG mit width:100% jeden Inhalt auf die
+  // Spaltenbreite: ein Automat mit zwei Zustaenden wird riesig, einer mit
+  // fuenfzehn unlesbar klein. Der Zoom ist Anzeigebreite geteilt durch
+  // viewBox-Breite und wird auf dieses Fenster geklemmt; was dann nicht mehr
+  // hineinpasst, bekommt in .graph-wrap Scrollbalken.
+  const ZOOM_MIN = 0.55;
+  const ZOOM_MAX = 1.15;
+
   function fitViewBox(svg, W, Hh) {
     let bb = null;
     try { bb = svg.getBBox(); } catch (e) { /* unsichtbares SVG */ }
-    if (!bb || !bb.width || !bb.height) {
-      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + Hh);
-      return;
-    }
     const m = 8;
-    svg.setAttribute('viewBox',
-      (bb.x - m) + ' ' + (bb.y - m) + ' ' + (bb.width + 2 * m) + ' ' + (bb.height + 2 * m));
+    let vw = W, vh = Hh, vx = 0, vy = 0;
+    if (bb && bb.width && bb.height) {
+      vx = bb.x - m; vy = bb.y - m;
+      vw = bb.width + 2 * m; vh = bb.height + 2 * m;
+    }
+    svg.setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
+    clampZoom(svg, vw, vh);
+  }
+
+  // Die verfuegbare Breite ist die des Elternelements, nicht die des SVG selbst:
+  // dessen Breite setzen wir hier gerade. Ohne Layout (Node-Test, verstecktes
+  // Panel) ist clientWidth 0, dann bleiben die Attribute weg und das SVG
+  // verhaelt sich wie vorher.
+  function clampZoom(svg, vw, vh) {
+    const parent = svg.parentNode;
+    const avail = parent && parent.clientWidth ? parent.clientWidth : 0;
+    if (!avail || !vw) { svg.removeAttribute('width'); svg.removeAttribute('height'); return; }
+    let zoom = avail / vw;
+    if (zoom < ZOOM_MIN) zoom = ZOOM_MIN;
+    if (zoom > ZOOM_MAX) zoom = ZOOM_MAX;
+    svg.setAttribute('width', Math.round(vw * zoom));
+    svg.setAttribute('height', Math.round(vh * zoom));
+  }
+
+  // Kuerzt eine Parametermenge auf hoechstens SET_MAX Zeichen und bricht sie in
+  // Zeilen von hoechstens SET_COLS Zeichen um. Geschnitten wird an Trennern
+  // (Semikolon, Komma) statt mitten in einer Belegung, damit das Ergebnis lesbar
+  // bleibt statt nur kurz zu sein.
+  const SET_MAX = 76;
+  const SET_COLS = 30;
+
+  function clampSet(txt) {
+    let s = String(txt);
+    if (s.length > SET_MAX) {
+      let cut = -1;
+      for (const sep of ['; ', ', ']) {
+        const i = s.lastIndexOf(sep, SET_MAX);
+        if (i > cut) cut = i;
+      }
+      s = (cut > 12 ? s.slice(0, cut) : s.slice(0, SET_MAX)) + ' …';
+    }
+    const lines = [];
+    let rest = s;
+    while (rest.length > SET_COLS) {
+      let cut = rest.lastIndexOf(' ', SET_COLS);
+      if (cut < 10) cut = SET_COLS;
+      lines.push(rest.slice(0, cut));
+      rest = rest.slice(cut).replace(/^\s+/, '');
+    }
+    if (rest) lines.push(rest);
+    return lines;
+  }
+
+  function setLabelLines(g, lines, y0) {
+    const lineH = 12;
+    lines.forEach(function (ln, i) {
+      g.appendChild(el('text', {
+        class: 'state-set', 'text-anchor': 'middle', y: y0 + i * lineH
+      }, ln));
+    });
   }
 
   function drawTokens(g, tok) {
@@ -279,6 +345,12 @@
       g.style.cursor = 'grab';
       const gx = Math.round(((px[state].x - PAD) / GRID_X) * 2) / 2;
       const gy = Math.round(((px[state].y - PAD) / GRID_Y) * 2) / 2;
+      // Auf das halbe Raster einrasten, bevor der Aufrufer die pos-Zeile
+      // schreibt: sonst steht der Kreis an der Pixelstelle, an der die Maus
+      // losgelassen wurde, waehrend die DSL schon den gerundeten Wert hat, und
+      // beim naechsten Zeichnen springt er sichtbar dorthin.
+      px[state] = { x: PAD + gx * GRID_X, y: PAD + gy * GRID_Y };
+      g.setAttribute('transform', 'translate(' + px[state].x + ',' + px[state].y + ')');
       opts.onDrag(state, gx, gy);
     });
   }

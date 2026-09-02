@@ -1,4 +1,4 @@
-// strings.js — alle sichtbaren Texte, Deutsch und Englisch.
+// strings.js: alle sichtbaren Texte, Deutsch und Englisch.
 //
 // Englisch ist die Standardsprache: die Paper sind englisch, das Publikum liest
 // englisch. Deutsch bleibt vollstaendig erhalten und ist einen Klick entfernt.
@@ -28,7 +28,7 @@
     'theme.dark': 'Dunkles Thema',
 
     // ---------- Startseite ----------
-    'idx.title': 'infinite alphabets — Automaten über unendlichen Alphabeten',
+    'idx.title': 'infinite alphabets: Automaten über unendlichen Alphabeten',
     'idx.h1': 'Parametrisierte Automaten und Variablenautomaten',
     'idx.lead': 'Zwei Werkzeuge zu den Papern von Franziska Alber und Philipp Rümmer über Automaten auf unendlichen Alphabeten. Die Beispiele aus beiden Arbeiten sind hinterlegt und nachrechenbar; eigene Automaten lassen sich in einer kleinen Textsprache eingeben.',
     'idx.ciaa.h': 'Complementable Normal Form of Parametrized Automata (CIAA)',
@@ -41,17 +41,17 @@
     'idx.claims.p1': 'Alles, was pro Wort passiert, ist exakt gerechnet: Mitgliedschaft, Parametermengen, Läufe, Leerheit, Determinismus, die Produktkonstruktionen. Über rationalen Zahlen wird mit exakten Brüchen gearbeitet, nicht mit Gleitkomma.',
     'idx.claims.p2': 'Alles, was über <em>alle</em> Wörter quantifiziert, ist nur beschränkt prüfbar. Die Seite sagt nie „universell“ oder „ist eine CFPA“, sondern immer „kein Gegenbeispiel bis Länge n gefunden“. Universalität parametrisierter Automaten ist unentscheidbar; für 1-Variablen-Automaten ist sie entscheidbar, aber die Prozedur ist hier nicht implementiert.',
     'idx.tools.h': 'Werkzeuge',
-    'idx.tools.pg': '<a href="playground.html">PA-Playground</a> — Automaten eingeben, Wörter simulieren, Produkte bilden, Eigenschaften prüfen.',
-    'idx.tools.pos': '<a href="positions.html">Positionen</a> — Token-Animation für 1-Variablen-Automaten und Erkundung des Positionsraums.',
-    'idx.tools.sem': '<a href="semantics.html">Semantik</a> — was genau gerechnet wird: Konfigurationsmengen, die beiden Theorien, die Entscheidungsverfahren.',
+    'idx.tools.pg': '<a href="playground.html">PA-Playground</a>: Automaten eingeben, Wörter simulieren, Produkte bilden, Eigenschaften prüfen.',
+    'idx.tools.pos': '<a href="positions.html">Positionen</a>: Token-Animation für 1-Variablen-Automaten und Erkundung des Positionsraums.',
+    'idx.tools.sem': '<a href="semantics.html">Semantik</a>: was genau gerechnet wird: Konfigurationsmengen, die beiden Theorien, die Entscheidungsverfahren.',
     'idx.note': 'Diese Seite ist eine eigenständige Implementierung in JavaScript. Sie benutzt die Scala-Bibliothek der Autoren nicht und hält sich an die Definitionen der Paper. Kein Build-Schritt, keine externen Ressourcen; die Seite läuft auch offline aus dem Dateisystem.',
-    'idx.footer': 'Nach Arbeiten von Franziska Alber und Philipp Rümmer.',
+    'idx.footer': 'Grundlage sind die Paper CIAA und ATVA von Franziska Alber und Philipp Rümmer. Die Seite ist eine eigenständige Umsetzung in JavaScript.',
 
     // ---------- Playground: Markup ----------
-    'pg.title': 'PA-Playground — infinite alphabets',
+    'pg.title': 'PA-Playground: infinite alphabets',
     'pg.slotA': 'Slot A',
     'pg.slotB': 'Slot B',
-    'pg.drawBig': 'groß zeichnen',
+    'pg.drawBig': 'zeichnen',
     'pg.clear': 'leeren',
     'pg.fam.h': 'Familien mit Parameter n',
     'pg.fam.epa': 'EPA-Familie A<sub>n</sub>',
@@ -70,7 +70,6 @@
     'pg.legend.acc': 'akzeptierend',
     'pg.legend.comp': 'komplement-akzeptierend',
     'pg.legend.weak': 'schwach',
-    'pg.legend.drag': 'Zustände sind ziehbar; die pos-Zeilen werden zurückgeschrieben.',
     'pg.word.h': 'Wort',
     'pg.word.placeholder': '1, 2, 3   bzw.   abacb',
     'pg.step.all': 'alle',
@@ -96,10 +95,23 @@
     'pg.share.tikz': 'TikZ-Export des gezeigten Graphen',
     'pg.exact.h': 'Was hier exakt ist',
     'pg.exact.p': 'Mitgliedschaft, Parametermengen, Leerheit, Determinismus und die Produkte sind exakt über den rationalen Zahlen gerechnet. Alles, was über <em>alle</em> Wörter quantifiziert (Universalität, CFPA-Eigenschaft, Skolem-Bedingung, SDPA), wird nur bis zur eingestellten Länge geprüft. Ein negatives Ergebnis ist dann ein echter Zeuge, ein positives nur „kein Gegenbeispiel gefunden“. Universalität von PA ist unentscheidbar.',
-    'pg.footer': 'Semantik nach Alber und Rümmer, CIAA und ATVA. Eigenständige JS-Implementierung, keine Bibliothek der Autoren.',
+    'pg.footer': 'Semantik nach den Papern CIAA und ATVA. Eigenständige Umsetzung in JavaScript.',
+
+    // ---------- Info-Overlays an den Panels ----------
+    'info.pg.slot': 'Ein Automat in Textform. Die Auswahl daneben laedt ein Beispiel aus den Papern, danach ist der Text frei editierbar. Was hier steht, wird sofort geparst: die Marken darunter zeigen Theorie, Parameterzahl, Groesse und ob der Automat deterministisch per Belegung ist. <em>zeichnen</em> holt diesen Slot in den Graphen.',
+    'info.pg.fam': 'Zwei Familien, die mit n wachsen, aus den Papern: die EPA-Familie A<sub>n</sub> und ein endlicher Automat in CFPA-Form. Sie zeigen, wie schnell die aequivalente klassische Darstellung waechst. Das Ergebnis landet in dem Slot, der unter <em>Operationen</em> eingestellt ist.',
+    'info.pg.ops': 'Konstruktionen auf A und B. Produkt, Schnitt und Vereinigung brauchen beide Slots, der Rest nur A. Das Ergebnis ueberschreibt den eingestellten Zielslot, der Ausgangsautomat bleibt also nur erhalten, wenn er woanders steht.',
+    'info.pg.graph': 'Der Automat des gezeichneten Slots. Akzeptierende Zustaende tragen einen Doppelkreis, komplement-akzeptierende eine zweite Fuellung, schwache einen gestrichelten Rand. Waehrend einer Simulation ist der aktuelle Zustand hervorgehoben und traegt die Parametermenge darunter. Zustaende lassen sich ziehen, das schreibt eine <code>pos</code>-Zeile in den Editor.',
+    'info.pg.word': 'Ein Wort als Liste von Buchstaben, durch Komma getrennt. Die Schrittleiste laeuft es Zeichen fuer Zeichen ab, die Tabelle zeigt zu jedem Schritt die Konfigurationsmenge, also welche Parameterbelegungen in welchem Zustand noch moeglich sind. Ein Klick auf eine Zeile springt zu diesem Schritt.',
+    'info.pg.checks': 'Pruefungen auf den Slots. Leerheit und Determinismus sind exakt entschieden. Alles, was ueber alle Woerter quantifiziert, wird nur bis zur eingestellten Laenge geprueft: ein gefundenes Gegenbeispiel ist echt, das Ausbleiben eines Gegenbeispiels ist kein Beweis. Jede Zeile ist entsprechend markiert.',
+    'info.pg.share': 'Der Link traegt A, B und das Wort komprimiert im Fragment, es wird nichts gespeichert und nichts gesendet. Der TikZ-Export liefert den gezeigten Graphen als LaTeX-Quelltext zum Einbetten.',
+    'info.pos.va': 'Ein 1-Variablen-Automat in Textform, also ein Automat mit genau einem Parameter ueber der Gleichheitstheorie. Die Auswahl laedt ein Beispiel, der Text ist danach frei editierbar. Die Marken darunter melden, ob es wirklich ein gueltiges 1-VA ist.',
+    'info.pos.tokens': 'Statt eines Laufs pro Belegung zeigt die Animation alle gleichzeitig: fuer jeden Buchstaben des Wortes ein rundes Token, fuer alle nicht vorkommenden Werte ein eckiges. Jeder Knopf haengt einen Buchstaben an und schiebt die Token weiter.',
+    'info.pos.pos': 'Die Position ist der Vektor der Tokenzahlen pro Zustand: links die runden, rechts das eckige. Genau das entscheidet ueber Akzeptanz, nicht das Wort selbst. Aufgeklappt stehen die Matrizen, mit denen ein Buchstabe den Vektor weiterschiebt.',
+    'info.pos.explore': 'Zaehlt alle Woerter bis zur eingestellten Laenge auf und sammelt die erreichten Positionen. Findet sich eine nicht akzeptierende Position, ist der Automat nachweislich nicht universell. Bleibt sie aus, heisst das nur: bis zu dieser Tiefe kein Gegenbeispiel.',
 
     // ---------- Playground: dynamisch ----------
-    'pg.ex.empty': '— leer —',
+    'pg.ex.custom': '(eigene Eingabe)',
     'pg.badge.reals': 'ℝ, linear',
     'pg.badge.equality': 'Gleichheit',
     'pg.badge.params': '{0} Parameter',
@@ -117,7 +129,7 @@
     'pg.verdict.comp': 'komplement-akzeptiert',
     'pg.verdict.via': ' via {0}',
     'pg.verdict.conflict': 'CFPA-Konflikt: das Wort ist gleichzeitig akzeptiert und komplement-akzeptiert. F_c ist zu groß.',
-    'pg.verdict.gap': 'weder akzeptiert noch komplement-akzeptiert — bei einer CFPA ist das eine Lücke: L(C) ≠ L(A)ᶜ',
+    'pg.verdict.gap': 'weder akzeptiert noch komplement-akzeptiert, bei einer CFPA ist das eine Lücke: L(C) ≠ L(A)ᶜ',
     'pg.verdict.rejected': 'nicht akzeptiert',
     'pg.conf.none': 'keine',
     'pg.step.label': 'Schritt {0} / {1}',
@@ -165,14 +177,14 @@
     'pg.share.failed': 'Link konnte nicht erzeugt werden: {0}',
 
     // ---------- Positionen: Markup ----------
-    'pos.title': 'Positionen und Tokens — infinite alphabets',
+    'pos.title': 'Positionen und Tokens: infinite alphabets',
     'pos.va.h': '1-VA',
     'pos.what.h': 'Was eine Position ist',
     'pos.what.p1': 'Ein 1-VA ist deterministisch per Belegung: für jede Wahl von μ(y) gibt es genau einen Lauf. Ein Wort w interessiert also nur über die Frage, wo diese Läufe enden. Für jeden Buchstaben a von w gibt es ein <strong>rundes Token</strong> im Endzustand des Laufs mit μ(y) = a, und ein <strong>eckiges Token</strong> für alle μ(y), die in w nicht vorkommen. Der Vektor der Tokenzahlen ist die Position von w.',
     'pos.what.p2': 'w wird akzeptiert genau dann, wenn irgendein Token in einem akzeptierenden Zustand sitzt. Der Automat ist universell genau dann, wenn jede erreichbare Position akzeptierend ist. Welcher Buchstabe genau angehängt wird, ist egal: nur der Zustand seines Tokens zählt.',
     'pos.what.p3': 'Die Positionsmenge ist im Allgemeinen unendlich. Die Entscheidungsprozedur des Papers läuft über Erreichbarkeit in Vektoradditionssystemen und ist Ackermann-hart; sie ist hier <strong>nicht</strong> implementiert. Diese Seite erkundet nur bis zu einer gewählten Tiefe.',
     'pos.tokens.h': 'Tokens',
-    'pos.undo': '← Undo',
+    'pos.undo': 'Undo',
     'pos.reset': 'Reset',
     'pos.legend.acc': 'akzeptierend',
     'pos.legend.round': '● rundes Token (ein Buchstabe)',
@@ -186,7 +198,7 @@
     'pos.th.pos': 'Position',
     'pos.th.word': 'Wort',
     'pos.th.acc': 'akz.',
-    'pos.footer': 'Positionen und Nachfolgermatrizen nach Alber und Rümmer, ATVA §5.',
+    'pos.footer': 'Positionen und Nachfolgermatrizen nach dem Paper ATVA, §5.',
 
     // ---------- Positionen: dynamisch ----------
     'pos.badge.states': '{0} Zustände',
@@ -194,7 +206,7 @@
     'pos.badge.isVA': 'gültiges 1-VA',
     'pos.badge.accepting': 'akzeptierend: {0}',
     'pos.badge.none': 'keine',
-    'pos.btn.title': 'Token sitzt in {0} — wendet π{1} an',
+    'pos.btn.title': 'Token sitzt in {0}, wendet π{1} an',
     'pos.btn.fresh': 'neuer Buchstabe ({0})',
     'pos.btn.freshTitle': 'wendet π₀ an',
     'pos.vec.legend': 'links: runde Tokens pro Zustand · rechts: das eckige Token',
@@ -211,7 +223,7 @@
     'pos.explore.more': '… {0} weitere',
 
     // ---------- Semantik ----------
-    'sem.title': 'Semantik — infinite alphabets',
+    'sem.title': 'Semantik: infinite alphabets',
     'sem.h1': 'Was genau gerechnet wird',
     'sem.lead': 'Diese Seite beschreibt die Semantik, die der Playground implementiert, damit nachvollziehbar ist, was hinter einem Ergebnis steht. Die Definitionen folgen den Papern, nicht den Konventionen einer Bibliothek.',
     'sem.lang.h': 'Die Sprache',
@@ -243,7 +255,7 @@
     'sem.limits.li1': 'Über den reellen Zahlen ist genau ein Parameter erlaubt. Mehrere bräuchten Polyeder statt Intervalle und Projektion per Fourier-Motzkin.',
     'sem.limits.li2': 'Keine ε-Transitionen.',
     'sem.limits.li3': 'Die Entscheidungsprozedur für Universalität von 1-VA (Vektoradditionssysteme) ist nicht implementiert.',
-    'sem.footer': 'Semantik nach Alber und Rümmer, CIAA und ATVA.'
+    'sem.footer': 'Semantik nach den Papern CIAA und ATVA.'
   };
 
   const en = {
@@ -260,7 +272,7 @@
     'theme.dark': 'Dark theme',
 
     // ---------- Landing page ----------
-    'idx.title': 'infinite alphabets — automata over infinite alphabets',
+    'idx.title': 'infinite alphabets: automata over infinite alphabets',
     'idx.h1': 'Parametrized automata and variable automata',
     'idx.lead': 'Two tools accompanying the papers by Franziska Alber and Philipp Rümmer on automata over infinite alphabets. The examples from both papers are built in and can be recomputed; your own automata can be entered in a small textual language.',
     'idx.ciaa.h': 'Complementable Normal Form of Parametrized Automata (CIAA)',
@@ -273,17 +285,17 @@
     'idx.claims.p1': 'Everything that happens per word is computed exactly: membership, parameter sets, runs, emptiness, determinism, the product constructions. Over the rationals the arithmetic uses exact fractions, not floating point.',
     'idx.claims.p2': 'Everything that quantifies over <em>all</em> words can only be checked up to a bound. The site never says "universal" or "is a CFPA", only "no counterexample found up to length n". Universality of parametrized automata is undecidable; for 1-variable automata it is decidable, but that procedure is not implemented here.',
     'idx.tools.h': 'Tools',
-    'idx.tools.pg': '<a href="playground.html">PA playground</a> — enter automata, simulate words, form products, check properties.',
-    'idx.tools.pos': '<a href="positions.html">Positions</a> — token animation for 1-variable automata and exploration of the position space.',
-    'idx.tools.sem': '<a href="semantics.html">Semantics</a> — what exactly is computed: configuration sets, the two theories, the decision procedures.',
+    'idx.tools.pg': '<a href="playground.html">PA playground</a>: enter automata, simulate words, form products, check properties.',
+    'idx.tools.pos': '<a href="positions.html">Positions</a>: token animation for 1-variable automata and exploration of the position space.',
+    'idx.tools.sem': '<a href="semantics.html">Semantics</a>: what exactly is computed: configuration sets, the two theories, the decision procedures.',
     'idx.note': 'This site is an independent implementation in JavaScript. It does not use the authors’ Scala library and follows the definitions in the papers. No build step, no external resources; the site also runs offline from the file system.',
-    'idx.footer': 'After work by Franziska Alber and Philipp Rümmer.',
+    'idx.footer': 'Based on the CIAA and ATVA papers by Franziska Alber and Philipp Rümmer. This site is an independent implementation in JavaScript.',
 
     // ---------- Playground: markup ----------
-    'pg.title': 'PA playground — infinite alphabets',
+    'pg.title': 'PA playground: infinite alphabets',
     'pg.slotA': 'Slot A',
     'pg.slotB': 'Slot B',
-    'pg.drawBig': 'draw large',
+    'pg.drawBig': 'draw',
     'pg.clear': 'clear',
     'pg.fam.h': 'Families with parameter n',
     'pg.fam.epa': 'EPA family A<sub>n</sub>',
@@ -302,7 +314,6 @@
     'pg.legend.acc': 'accepting',
     'pg.legend.comp': 'complement-accepting',
     'pg.legend.weak': 'weak',
-    'pg.legend.drag': 'States can be dragged; the pos lines are written back.',
     'pg.word.h': 'Word',
     'pg.word.placeholder': '1, 2, 3   or   abacb',
     'pg.step.all': 'all',
@@ -328,10 +339,23 @@
     'pg.share.tikz': 'TikZ export of the graph shown',
     'pg.exact.h': 'What is exact here',
     'pg.exact.p': 'Membership, parameter sets, emptiness, determinism and the products are computed exactly over the rationals. Everything that quantifies over <em>all</em> words (universality, the CFPA property, the Skolem condition, SDPA) is only checked up to the length set above. A negative result is then a genuine witness, a positive one only "no counterexample found". Universality of PA is undecidable.',
-    'pg.footer': 'Semantics after Alber and Rümmer, CIAA and ATVA. Independent JS implementation, not the authors’ library.',
+    'pg.footer': 'Semantics after the CIAA and ATVA papers. Independent implementation in JavaScript.',
+
+    // ---------- Info overlays on the panels ----------
+    'info.pg.slot': 'An automaton in textual form. The selector next to it loads an example from the papers; the text is freely editable afterwards. Whatever stands here is parsed immediately: the badges below report the theory, the number of parameters, the size, and whether the automaton is deterministic per assignment. <em>draw</em> brings this slot into the graph.',
+    'info.pg.fam': 'Two families that grow with n, taken from the papers: the EPA family A<sub>n</sub> and a finite automaton in CFPA form. They show how quickly the equivalent classical representation grows. The result goes to the slot selected under <em>Operations</em>.',
+    'info.pg.ops': 'Constructions on A and B. Product, intersection and union need both slots, the rest only A. The result overwrites the selected target slot, so the input automaton survives only if it also sits elsewhere.',
+    'info.pg.graph': 'The automaton of the slot being drawn. Accepting states carry a double circle, complement-accepting ones a second fill, weak ones a dashed rim. During a simulation the current state is highlighted and carries its parameter set below it. States can be dragged, which writes a <code>pos</code> line into the editor.',
+    'info.pg.word': 'A word as a comma-separated list of letters. The step bar walks through it letter by letter, and the table shows the configuration set at each step, that is, which parameter assignments are still possible in which state. Clicking a row jumps to that step.',
+    'info.pg.checks': 'Checks on the slots. Emptiness and determinism are decided exactly. Everything that quantifies over all words is only checked up to the length set above: a counterexample found is genuine, the absence of one is not a proof. Every line is labelled accordingly.',
+    'info.pg.share': 'The link carries A, B and the word compressed in the fragment; nothing is stored and nothing is sent. The TikZ export returns the graph shown as LaTeX source for embedding.',
+    'info.pos.va': 'A 1-variable automaton in textual form, that is, an automaton with exactly one parameter over the equality theory. The selector loads an example, the text is freely editable afterwards. The badges below report whether it really is a valid 1-VA.',
+    'info.pos.tokens': 'Instead of one run per assignment the animation shows all of them at once: a round token for every letter of the word, a square one for all values that do not occur. Each button appends a letter and moves the tokens along.',
+    'info.pos.pos': 'The position is the vector of token counts per state: the round ones on the left, the square one on the right. That alone decides acceptance, not the word itself. Expanded, it shows the matrices by which a letter moves the vector on.',
+    'info.pos.explore': 'Enumerates all words up to the length set and collects the positions reached. If a non-accepting position turns up, the automaton is demonstrably not universal. If none does, that only means: no counterexample up to this depth.',
 
     // ---------- Playground: dynamic ----------
-    'pg.ex.empty': '— empty —',
+    'pg.ex.custom': '(custom input)',
     'pg.badge.reals': 'ℝ, linear',
     'pg.badge.equality': 'equality',
     'pg.badge.params': '{0} parameters',
@@ -349,7 +373,7 @@
     'pg.verdict.comp': 'complement-accepted',
     'pg.verdict.via': ' via {0}',
     'pg.verdict.conflict': 'CFPA conflict: the word is accepted and complement-accepted at the same time. F_c is too large.',
-    'pg.verdict.gap': 'neither accepted nor complement-accepted — for a CFPA that is a gap: L(C) ≠ L(A)ᶜ',
+    'pg.verdict.gap': 'neither accepted nor complement-accepted, for a CFPA that is a gap: L(C) ≠ L(A)ᶜ',
     'pg.verdict.rejected': 'not accepted',
     'pg.conf.none': 'none',
     'pg.step.label': 'Step {0} / {1}',
@@ -397,14 +421,14 @@
     'pg.share.failed': 'Link could not be created: {0}',
 
     // ---------- Positions: markup ----------
-    'pos.title': 'Positions and tokens — infinite alphabets',
+    'pos.title': 'Positions and tokens: infinite alphabets',
     'pos.va.h': '1-VA',
     'pos.what.h': 'What a position is',
     'pos.what.p1': 'A 1-VA is deterministic per assignment: for every choice of μ(y) there is exactly one run. A word w therefore matters only through the question of where those runs end. For every letter a of w there is a <strong>round token</strong> in the final state of the run with μ(y) = a, and a <strong>square token</strong> for all μ(y) that do not occur in w. The vector of token counts is the position of w.',
     'pos.what.p2': 'w is accepted exactly if some token sits in an accepting state. The automaton is universal exactly if every reachable position is accepting. Which letter is appended does not matter: only the state of its token counts.',
     'pos.what.p3': 'The set of positions is infinite in general. The decision procedure of the paper goes through reachability in vector addition systems and is Ackermann-hard; it is <strong>not</strong> implemented here. This page only explores up to a chosen depth.',
     'pos.tokens.h': 'Tokens',
-    'pos.undo': '← Undo',
+    'pos.undo': 'Undo',
     'pos.reset': 'Reset',
     'pos.legend.acc': 'accepting',
     'pos.legend.round': '● round token (one letter)',
@@ -418,7 +442,7 @@
     'pos.th.pos': 'Position',
     'pos.th.word': 'Word',
     'pos.th.acc': 'acc.',
-    'pos.footer': 'Positions and successor matrices after Alber and Rümmer, ATVA §5.',
+    'pos.footer': 'Positions and successor matrices after the ATVA paper, §5.',
 
     // ---------- Positions: dynamic ----------
     'pos.badge.states': '{0} states',
@@ -426,7 +450,7 @@
     'pos.badge.isVA': 'valid 1-VA',
     'pos.badge.accepting': 'accepting: {0}',
     'pos.badge.none': 'none',
-    'pos.btn.title': 'token sits in {0} — applies π{1}',
+    'pos.btn.title': 'token sits in {0}, applies π{1}',
     'pos.btn.fresh': 'new letter ({0})',
     'pos.btn.freshTitle': 'applies π₀',
     'pos.vec.legend': 'left: round tokens per state · right: the square token',
@@ -443,7 +467,7 @@
     'pos.explore.more': '… {0} more',
 
     // ---------- Semantics ----------
-    'sem.title': 'Semantics — infinite alphabets',
+    'sem.title': 'Semantics: infinite alphabets',
     'sem.h1': 'What exactly is computed',
     'sem.lead': 'This page describes the semantics the playground implements, so that what stands behind a result can be followed. The definitions follow the papers, not the conventions of a library.',
     'sem.lang.h': 'The language',
@@ -475,7 +499,7 @@
     'sem.limits.li1': 'Over the reals exactly one parameter is allowed. Several would need polyhedra instead of intervals and projection by Fourier-Motzkin.',
     'sem.limits.li2': 'No ε-transitions.',
     'sem.limits.li3': 'The decision procedure for universality of 1-VA (vector addition systems) is not implemented.',
-    'sem.footer': 'Semantics after Alber and Rümmer, CIAA and ATVA.'
+    'sem.footer': 'Semantics after the CIAA and ATVA papers.'
   };
 
   root.STRINGS = { de: de, en: en };

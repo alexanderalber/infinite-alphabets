@@ -116,6 +116,9 @@
     for (const a of letters) {
       const s = tokenState(state.word, a);
       const b = document.createElement('button');
+      // Hausregel: jede Schaltflaeche traegt ein Icon. Ein vorhandener Buchstabe
+      // wird angehaengt wie ein frischer, also dasselbe Zeichen.
+      b.setAttribute('data-icon', 'plus');
       b.textContent = a;
       b.title = T().f('pos.btn.title', Au.displayState(state.info.states[s]), Fo.sub(s + 1));
       b.addEventListener('click', function () { append(a); });
@@ -123,6 +126,7 @@
     }
     const nb = document.createElement('button');
     nb.className = 'primary';
+    nb.setAttribute('data-icon', 'plus');
     const fresh = P.nextFreshLetter(state.word);
     nb.textContent = T().f('pos.btn.fresh', fresh);
     nb.title = T().t('pos.btn.freshTitle');

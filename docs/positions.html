@@ -5,7 +5,7 @@
 <script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
 <script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-i18n="pos.title">Positions and tokens — infinite alphabets</title>
+<title data-i18n="pos.title">Positions and tokens: infinite alphabets</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -34,7 +34,7 @@
 
     <!-- Spalte 1: Editor -->
     <div>
-      <div class="panel">
+      <div class="panel" data-info="info.pos.va">
         <h2 data-i18n="pos.va.h">1-VA</h2>
         <div class="field-row">
           <select id="ex"></select>
@@ -45,23 +45,25 @@
       </div>
 
       <div class="panel">
-        <h2 data-i18n="pos.what.h">What a position is</h2>
-        <p class="hint" data-i18n-html="pos.what.p1"></p>
-        <p class="hint" data-i18n-html="pos.what.p2"></p>
-        <p class="hint" data-i18n-html="pos.what.p3"></p>
+        <details>
+          <summary data-i18n="pos.what.h">What a position is</summary>
+          <p class="hint" data-i18n-html="pos.what.p1"></p>
+          <p class="hint" data-i18n-html="pos.what.p2"></p>
+          <p class="hint" data-i18n-html="pos.what.p3"></p>
+        </details>
       </div>
     </div>
 
     <!-- Spalte 2: Animation -->
     <div>
-      <div class="panel">
+      <div class="panel" data-info="info.pos.tokens">
         <h2 data-i18n="pos.tokens.h">Tokens</h2>
         <div class="graph-wrap"><svg class="graph" id="graph"></svg></div>
         <div class="word-display" id="wordDisplay"></div>
         <div class="btn-row" id="letterButtons"></div>
         <div class="btn-row">
-          <button id="undo" data-i18n="pos.undo">← Undo</button>
-          <button id="reset" data-i18n="pos.reset">Reset</button>
+          <button data-icon="undo" id="undo" data-i18n="pos.undo">Undo</button>
+          <button data-icon="rotate" id="reset" data-i18n="pos.reset">Reset</button>
         </div>
         <div class="legend">
           <span><i class="acc"></i> <span data-i18n="pos.legend.acc">accepting</span></span>
@@ -73,7 +75,7 @@
 
     <!-- Spalte 3: Vektor und Erkundung -->
     <div>
-      <div class="panel">
+      <div class="panel" data-info="info.pos.pos">
         <h2 data-i18n="pos.pos.h">Position</h2>
         <div class="vec" id="vec"></div>
         <p class="hint" id="applied"></p>
@@ -84,11 +86,11 @@
         </details>
       </div>
 
-      <div class="panel">
+      <div class="panel" data-info="info.pos.explore">
         <h2 data-i18n="pos.explore.h">Exploration</h2>
         <div class="field-row">
           <label><span data-i18n="pos.explore.depth">Depth (word length) ≤</span> <input type="text" id="depth" value="6" style="width:3rem"></label>
-          <button id="explore" class="primary" data-i18n="pos.explore.start">Start</button>
+          <button data-icon="play" id="explore" class="primary" data-i18n="pos.explore.start">Start</button>
         </div>
         <div id="exploreOut"></div>
         <div class="pos-table"><table id="posTable"><thead>

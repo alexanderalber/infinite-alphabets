@@ -81,6 +81,9 @@
     LANG = lang;
     el.lang = lang;
     applyStatic();
+    // Offene Info-Overlays schliessen: ihr Inhalt wird erst beim Oeffnen aus der
+    // Tabelle geholt, ein offenes Overlay bliebe sonst in der alten Sprache stehen.
+    if (typeof closeAllInfo === 'function') closeAllInfo();
     // Alles, was die Seite selbst erzeugt (Tabellen, Graphen, Meldungen), baut
     // sich hier neu auf. Ohne Hook bleibt nur das statische Markup uebersetzt.
     if (typeof root.__onLang === 'function') root.__onLang(lang);
@@ -247,12 +250,63 @@
     });
   }
 
+  // ------------------------------------------------------------ Info-Overlays
+  //
+  // Jedes Panel mit data-info="<schluessel>" bekommt oben rechts ein kleines i,
+  // das den Text unter diesem Schluessel als Overlay zeigt. Damit steht die
+  // Erklaerung dort, wo die Funktion bedient wird, statt in einem eigenen Panel
+  // daneben, und sie kostet nichts, solange niemand sie aufruft.
+  //
+  // Der Knopf wird hier erzeugt und nicht in jede Seite geschrieben: er ist
+  // Chrome, kein Inhalt, und muss beim Sprachwechsel ohnehin durch dieselbe
+  // Hand. Ein <button> mit aria-expanded, weil das i eine Aktion ist und keine
+  // Anzeige; die Affordanzregel bleibt gewahrt, weil es ein Kreis mit Rahmen
+  // ist und keine vierte Kastenform.
+  function buildInfo() {
+    document.querySelectorAll('[data-info]').forEach(function (panel) {
+      if (panel.querySelector(':scope > .info-btn')) return;
+      var key = panel.getAttribute('data-info');
+      var btn = document.createElement('button');
+      btn.className = 'info-btn';
+      btn.type = 'button';
+      btn.textContent = 'i';
+      btn.setAttribute('aria-expanded', 'false');
+      var box = document.createElement('div');
+      box.className = 'info-box';
+      box.hidden = true;
+      panel.appendChild(btn);
+      panel.appendChild(box);
+      // Position relativ zum Panel, sonst sitzt das i im Textfluss.
+      if (getComputedStyle(panel).position === 'static') panel.style.position = 'relative';
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var open = box.hidden;
+        closeAllInfo();
+        if (open) {
+          box.innerHTML = t(key);
+          box.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+      box.addEventListener('click', function (ev) { ev.stopPropagation(); });
+    });
+  }
+
+  function closeAllInfo() {
+    document.querySelectorAll('.info-box').forEach(function (b) { b.hidden = true; });
+    document.querySelectorAll('.info-btn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+  }
+
+  document.addEventListener('click', closeAllInfo);
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAllInfo(); });
+
   // Die Sprache steht schon vor dem ersten Paint fest (Einzeiler im <head>),
   // uebersetzt wird, sobald das Markup da ist.
   LANG = resolveLang();
 
   function boot() {
     applyLang(LANG);
+    buildInfo();
     initTheme();
     initLang();
   }
