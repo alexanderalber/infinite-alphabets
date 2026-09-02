@@ -279,16 +279,22 @@ button.primary:hover:not(:disabled),
    Der Unterschied zur Schaltflaeche muss ohne Mauszeiger lesbar sein, sonst
    sieht eine Reihe Badges aus wie eine Reihe Knoepfe. Drei Merkmale zusammen,
    nicht eines allein, weil im grauen Skin die Farbe als Unterscheidung ausfaellt:
-     - Kapselform (border-radius 999px) gegen das Rechteck der Schaltflaeche,
      - linker Farbbalken statt umlaufendem Rahmen: eine Marke am Text, kein Kasten,
-     - keine Hover-Reaktion, cursor: default, Text markierbar.
-   Der Balken traegt die Schwere (ok/warn/err), die Flaeche bleibt ruhig. */
+     - keine Erhebung und keine Hover-Reaktion, cursor: default, Text markierbar,
+     - kleinere Schrift im Monospace-Satz, waehrend Schaltflaechen die Grundschrift
+       der Seite tragen.
+   Der Balken traegt die Schwere (ok/warn/err), die Flaeche bleibt ruhig.
+
+   Der Radius ist klein und ausdruecklich kein 999px: border-radius rundet die
+   Ecken der Randbox, also wird ein einseitiger 3px-Rand um die volle Kapsel
+   gebogen und steht als dicke Klammer vor dem Text statt als gerader Balken.
+   Kapselform und einseitiger Rand schliessen sich damit gegenseitig aus. */
 .badges { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.55rem; }
 .badge {
   display: inline-block;
   font-size: 0.78rem;
-  padding: 0.12rem 0.55rem 0.12rem 0.5rem;
-  border-radius: 999px;
+  padding: 0.12rem 0.55rem 0.12rem 0.45rem;
+  border-radius: 3px;
   border: none;
   border-left: 3px solid var(--tool-hairline);
   background: var(--tool-subtle);
