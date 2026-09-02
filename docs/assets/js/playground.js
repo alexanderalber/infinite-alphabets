@@ -25,15 +25,18 @@
   // dann steht dort sehr wohl der Code eines Automaten. Slot A hatte den Eintrag
   // gar nicht, weshalb dort nach dem Tippen weiter das zuletzt gewaehlte Beispiel
   // angezeigt wurde, obwohl im Editor etwas anderes stand.
-  function fillExamples(sel) {
-    sel.appendChild(new Option(T().t('pg.ex.custom'), ''));
+  // Der leere Eintrag heisst in beiden Slots verschieden: in A tippt man dort
+  // selbst, in B leert seine Auswahl das Feld, und ein leerer Slot B ist ein
+  // eigener, gueltiger Zustand (die Ein-Automaten-Pruefungen brauchen ihn nicht).
+  function fillExamples(sel, emptyKey) {
+    sel.appendChild(new Option(T().t(emptyKey), ''));
     for (const e of Ex.all) {
       const o = new Option(Ex.title(e) + '  [' + e.source + ']', e.id);
       sel.appendChild(o);
     }
   }
-  fillExamples($('exA'));
-  fillExamples($('exB'));
+  fillExamples($('exA'), 'pg.ex.custom');
+  fillExamples($('exB'), 'pg.ex.none');
 
   $('exA').addEventListener('change', function () {
     const e = Ex.byId(this.value);
@@ -108,13 +111,10 @@
   function redraw() {
     updateGridVisibility();
     const A = currentAutomaton();
-    $('graphWhich').textContent = state.which;
-    // "zeichnen" waehlt aus, welcher Slot im Graphen steht, es fuehrt keine
-    // Aktion aus, die etwas veraendert. Also ist es nach der Affordanzregel ein
-    // .seg und kein Button, und der aktive Slot ist das aktive Segment. Als
-    // gefuellter .primary haette derselbe Knopf zwei Dinge gleichzeitig gesagt,
-    // "tu etwas" und "das siehst du gerade", und im Nachbarslot haette das
-    // danebenstehende "leeren" faelschlich wie das Gegenstueck ausgesehen.
+    // Die Slot-Wahl ist eine Auswahl, kein Befehl: das Segmentpaar sitzt deshalb
+    // ueber dem Graphen, den es umschaltet, und der gezeigte Slot ist das aktive
+    // Segment. Frueher stand je ein "zeichnen"-Knopf in den Slot-Panels; dort las
+    // er sich wie eine Aktion, obwohl er nur die Anzeige woanders umlegte.
     $('showA').classList.toggle('active', state.which === 'A');
     $('showB').classList.toggle('active', state.which === 'B');
     const svg = $('graph');
@@ -443,7 +443,7 @@
     btn.addEventListener('click', function () {
       const n = parseInt($('famN').value, 10);
       const kind = this.getAttribute('data-fam');
-      const target = $('opSlot').value;
+      const target = $('famSlot').value;
       let note = '';
       if (kind === 'epa') {
         $('dsl' + target).value = Ex.epaFamily(n);
@@ -577,8 +577,8 @@
     const selA = $('exA').value, selB = $('exB').value;
     $('exA').innerHTML = '';
     $('exB').innerHTML = '';
-    fillExamples($('exA'));
-    fillExamples($('exB'));
+    fillExamples($('exA'), 'pg.ex.custom');
+    fillExamples($('exB'), 'pg.ex.none');
     $('exA').value = selA;
     $('exB').value = selB;
     $('checkOut').innerHTML = '';

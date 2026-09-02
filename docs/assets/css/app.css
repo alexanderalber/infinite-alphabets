@@ -278,7 +278,11 @@ button:not(.seg)::before,
 button[data-icon="play"],       .btn[data-icon="play"]       { --icon: url('../img/icons/ui-play.svg'); }
 button[data-icon="check"],      .btn[data-icon="check"]      { --icon: url('../img/icons/ui-check.svg'); }
 button[data-icon="merge"],      .btn[data-icon="merge"]      { --icon: url('../img/icons/ui-merge.svg'); }
-button[data-icon="wand"],       .btn[data-icon="wand"]       { --icon: url('../img/icons/ui-wand.svg'); }
+button[data-icon="replace"],    .btn[data-icon="replace"]    { --icon: url('../img/icons/ui-replace.svg'); }
+button[data-icon="add"],        .btn[data-icon="add"]        { --icon: url('../img/icons/ui-square-plus.svg'); }
+button[data-icon="filter"],     .btn[data-icon="filter"]     { --icon: url('../img/icons/ui-filter.svg'); }
+button[data-icon="minimize"],   .btn[data-icon="minimize"]   { --icon: url('../img/icons/ui-minimize.svg'); }
+button[data-icon="scissors"],   .btn[data-icon="scissors"]   { --icon: url('../img/icons/ui-scissors.svg'); }
 button[data-icon="link"],       .btn[data-icon="link"]       { --icon: url('../img/icons/ui-link.svg'); }
 button[data-icon="code"],       .btn[data-icon="code"]       { --icon: url('../img/icons/ui-code.svg'); }
 button[data-icon="eraser"],     .btn[data-icon="eraser"]     { --icon: url('../img/icons/ui-eraser.svg'); }
@@ -517,20 +521,30 @@ input[type="text"] {
   font-size: 0.9rem;
   background: var(--tool-panel);
 }
+/* Der Aufklapppfeil zeichnet der Browser in die rechte Polsterung hinein, ohne
+   selbst Platz dafuer zu reservieren. Bei langen Beispieltiteln laeuft der Text
+   sonst unter den Pfeil, deshalb rechts eine eigene Spur. */
 select {
   border: 1px solid var(--tool-border);
   border-radius: 4px;
-  padding: 0.3rem 0.4rem;
+  padding: 0.3rem 1.6rem 0.3rem 0.4rem;
   background: var(--tool-panel);
   max-width: 100%;
   cursor: pointer;
+  text-overflow: ellipsis;
 }
 textarea:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 
 .btn-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
-.seg-row { display: flex; flex-wrap: wrap; margin-top: 0.5rem; }
+.seg-row { display: flex; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; }
+/* Ein Segmentpaar ausserhalb des Headers: .group haelt die Segmente zusammen,
+   damit .seg + .seg die geteilte Kante bekommt, auch wenn ein Label davorsteht. */
+.seg-row .group { display: inline-flex; }
+.seg-label { font-size: 0.88rem; color: var(--tool-label); margin-right: 0.5rem; }
+/* Die Auswahl haengt sonst am Rahmen der Zeichenflaeche darunter. */
+.seg-row + .graph-wrap { margin-top: 0.6rem; }
 .field-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
 .field-row label { font-size: 0.88rem; color: var(--tool-label); }
 
@@ -649,6 +663,11 @@ html[data-skin="grey"] .info-box { background: var(--tool-subtle); }
 .info-box code { font-family: var(--mono); font-size: 0.9em; }
 
 .hint { font-size: 0.85rem; color: var(--tool-note); margin: 0.3rem 0 0; }
+
+/* Kopfzeile eines Papers auf der Startseite: Autoren, Konferenz, Jahr.
+   Steht direkt unter der Ueberschrift und ist bewusst leiser als der Fliesstext,
+   damit sie als Angabe und nicht als erster Satz gelesen wird. */
+.paper-meta { font-size: 0.88rem; color: var(--tool-note); margin: -0.4rem 0 0.6rem; }
 .error { color: var(--tool-sig-bad); font-family: var(--mono); font-size: 0.85rem; white-space: pre-wrap; }
 .result-line { font-size: 0.88rem; margin: 0.25rem 0; }
 .result-line .tag { font-family: var(--mono); font-size: 0.78rem; color: var(--tool-note); }
@@ -672,6 +691,13 @@ details { margin-top: 0.5rem; }
 summary { cursor: pointer; font-size: 0.88rem; color: var(--tool-label); }
 summary:hover { color: var(--tool-emph); }
 details[open] summary { margin-bottom: 0.4rem; }
+
+/* Abstract auf der Startseite: der zugeklappte Text soll sich vom Fliesstext
+   absetzen, ohne wie ein Kasten mit Funktion auszusehen. Deshalb linker Balken
+   plus eine Spur Flaeche, nicht Rahmen: im grey-Skin traegt die Flaeche nichts,
+   dort bleibt der Balken das Merkmal. */
+.abstract { border-left: 3px solid var(--tool-border); background: var(--tool-subtle); padding: 0.5rem 0.8rem; margin: 0 0 0.8rem; }
+.abstract p { margin: 0; color: var(--tool-note); }
 
 /* Die Matrizen sitzen im aufklappbaren Teil der schmalsten Spalte. Ohne
    width:auto zieht die Tabelle die Regel table{width:100%} von oben mit und

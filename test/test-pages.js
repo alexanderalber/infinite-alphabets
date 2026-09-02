@@ -229,7 +229,11 @@ async function main() {
       check('playground: Produkt-DSL enthaelt Tupelzustaende', /\(q0,r0\)/.test(prod.dsl), prod.dsl.slice(0, 120));
 
       // Familien-Slider und TikZ-Export
+      // Die Familien schreiben in ihr eigenes Ziel (famSlot), nicht in das der
+      // Operationen. Der Test stellt es ausdruecklich, statt sich auf den
+      // Vorgabewert zu verlassen.
       const famC = await evaluate(`(function(){
+        document.getElementById('famSlot').value = 'B';
         document.getElementById('famN').value = '3';
         document.getElementById('famN').dispatchEvent(new Event('input'));
         document.querySelector('[data-fam="cffsa"]').click();

@@ -9,7 +9,7 @@
 <script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-i18n="idx.title">infinite alphabets: automata over infinite alphabets</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
@@ -37,24 +37,25 @@
 
   <p data-i18n="idx.lead"></p>
 
-  <h2 data-i18n="idx.ciaa.h">Complementable Normal Form of Parametrized Automata (CIAA)</h2>
+  <!-- Pro Paper derselbe Aufbau: Titel, Kopfzeile mit Autoren/Konferenz/Jahr,
+       zugeklappt das Abstract, aufgeklappt die Beschreibung der Spielzeuge. -->
+  <h2 data-i18n="idx.ciaa.h">Complementable Normal Form of Parametrized Automata</h2>
+  <p class="paper-meta" data-i18n="idx.ciaa.meta"></p>
+  <details>
+    <summary data-i18n="idx.abstract">Abstract</summary>
+    <div class="abstract"><p data-i18n-html="idx.ciaa.abstract"></p></div>
+  </details>
   <p data-i18n-html="idx.ciaa.p"></p>
   <p><a href="playground.html" data-i18n="idx.ciaa.link">→ PA playground</a></p>
 
-  <h2 data-i18n="idx.atva.h">Universality of 1-Variable Automata is Decidable (ATVA)</h2>
+  <h2 data-i18n="idx.atva.h">Universality of 1-Variable Automata is Decidable</h2>
+  <p class="paper-meta" data-i18n="idx.atva.meta"></p>
+  <details>
+    <summary data-i18n="idx.abstract">Abstract</summary>
+    <div class="abstract"><p data-i18n-html="idx.atva.abstract"></p></div>
+  </details>
   <p data-i18n-html="idx.atva.p"></p>
   <p><a href="positions.html" data-i18n="idx.atva.link">→ Positions and tokens</a></p>
-
-  <h2 data-i18n="idx.claims.h">What this site claims and what it does not</h2>
-  <p data-i18n-html="idx.claims.p1"></p>
-  <p data-i18n-html="idx.claims.p2"></p>
-
-  <h2 data-i18n="idx.tools.h">Tools</h2>
-  <ul>
-    <li data-i18n-html="idx.tools.pg"></li>
-    <li data-i18n-html="idx.tools.pos"></li>
-    <li data-i18n-html="idx.tools.sem"></li>
-  </ul>
 
   <p class="hint" data-i18n="idx.note"></p>
 </main>
