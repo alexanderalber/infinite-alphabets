@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>infinite alphabets — Automaten über unendlichen Alphabeten</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="site">
+  <span class="brand">infinite alphabets</span>
+  <nav>
+    <a href="index.html" class="active">Start</a>
+    <a href="playground.html">PA-Playground</a>
+    <a href="positions.html">Positionen</a>
+    <a href="semantics.html">Semantik</a>
+  </nav>
+</header>
+
+<main class="prose">
+  <h1>Parametrisierte Automaten und Variablenautomaten</h1>
+
+  <p>
+    Zwei Werkzeuge zu den Papern von Franziska Alber und Philipp Rümmer über Automaten
+    auf unendlichen Alphabeten. Die Beispiele aus beiden Arbeiten sind hinterlegt und
+    nachrechenbar; eigene Automaten lassen sich in einer kleinen Textsprache eingeben.
+  </p>
+
+  <h2>Complementable Normal Form of Parametrized Automata (CIAA)</h2>
+  <p>
+    Ein parametrisierter Automat liest Buchstaben aus einer unendlichen Struktur, und seine
+    Transitionen sind Formeln über dem gelesenen Buchstaben <code>x</code> und einer Handvoll
+    global fixierter Parameter <code>y</code>. Akzeptiert wird ein Wort, wenn es <em>irgendeine</em>
+    Parameterbelegung gibt, unter der ein akzeptierender Lauf existiert. Diese existenzielle
+    Quantifizierung macht die Klasse unter Komplement nicht abgeschlossen. Das Paper gibt eine
+    Normalform an, die complementable normal form: ein Automat trägt zusätzlich eine Menge
+    komplement-akzeptierender Zustände, und Komplementieren wird zum Vertauschen zweier Mengen.
+    Der Playground rechnet Mitgliedschaft und Parametermengen exakt, baut das synchronisierte
+    Produkt aus dem Konstruktionssatz und prüft die CFPA-Bedingung auf Wortmengen nach.
+  </p>
+  <p><a href="playground.html">→ PA-Playground</a></p>
+
+  <h2>Universality of 1-Variable Automata is Decidable (ATVA)</h2>
+  <p>
+    Ein Variablenautomat vergleicht den gelesenen Buchstaben nur auf Gleichheit mit gebundenen
+    Variablen. Bei genau einer Variablen gibt es für jede Belegung genau einen Lauf, und die
+    Wirkung eines Wortes lässt sich zu einem Vektor zusammenfassen: pro Zustand die Anzahl der
+    Buchstaben, deren Lauf dort endet, plus ein Eintrag für die Belegungen, die im Wort nicht
+    vorkommen. Das Paper nennt diesen Vektor die Position des Wortes und zeigt, dass die
+    Nachfolgerpositionen durch feste Matrizen beschrieben werden. Universalität wird damit zu
+    einem Erreichbarkeitsproblem in einem Vektoradditionssystem, entscheidbar, aber
+    Ackermann-hart. Die Positions-Seite animiert die Tokens und erkundet die Positionen bis zu
+    einer wählbaren Tiefe.
+  </p>
+  <p><a href="positions.html">→ Positionen und Tokens</a></p>
+
+  <h2>Was die Seite behauptet und was nicht</h2>
+  <p>
+    Alles, was pro Wort passiert, ist exakt gerechnet: Mitgliedschaft, Parametermengen, Läufe,
+    Leerheit, Determinismus, die Produktkonstruktionen. Über rationalen Zahlen wird mit exakten
+    Brüchen gearbeitet, nicht mit Gleitkomma.
+  </p>
+  <p>
+    Alles, was über <em>alle</em> Wörter quantifiziert, ist nur beschränkt prüfbar. Die Seite sagt
+    nie „universell“ oder „ist eine CFPA“, sondern immer „kein Gegenbeispiel bis Länge n gefunden“.
+    Universalität parametrisierter Automaten ist unentscheidbar; für 1-Variablen-Automaten ist sie
+    entscheidbar, aber die Prozedur ist hier nicht implementiert.
+  </p>
+
+  <h2>Werkzeuge</h2>
+  <ul>
+    <li><a href="playground.html">PA-Playground</a> — Automaten eingeben, Wörter simulieren, Produkte bilden, Eigenschaften prüfen.</li>
+    <li><a href="positions.html">Positionen</a> — Token-Animation für 1-Variablen-Automaten und Erkundung des Positionsraums.</li>
+    <li><a href="semantics.html">Semantik</a> — was genau gerechnet wird: Konfigurationsmengen, die beiden Theorien, die Entscheidungsverfahren.</li>
+  </ul>
+
+  <p class="hint">
+    Diese Seite ist eine eigenständige Implementierung in JavaScript. Sie benutzt die
+    Scala-Bibliothek der Autoren nicht und hält sich an die Definitionen der Paper.
+    Kein Build-Schritt, keine externen Ressourcen; die Seite läuft auch offline aus dem
+    Dateisystem.
+  </p>
+</main>
+
+<footer class="site">
+  Nach Arbeiten von Franziska Alber und Philipp Rümmer.
+</footer>
+
+</body>
+</html>

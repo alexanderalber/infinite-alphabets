@@ -1,0 +1,454 @@
+// playground.js — UI des PA-Playgrounds.
+(function () {
+  'use strict';
+
+  const Au = window.Automaton;
+  const Ex = window.Examples;
+  const D = window.Draw;
+
+  const $ = function (id) { return document.getElementById(id); };
+
+  const state = {
+    A: null, B: null,          // geparste Automaten (oder null bei Fehler)
+    which: 'A',                // welcher Automat groß gezeichnet wird
+    sim: null,                 // Simulationsergebnis für den aktuellen Automaten
+    step: 0
+  };
+
+  // ---------- Beispielauswahl ----------
+
+  function fillExamples(sel, withEmpty) {
+    if (withEmpty) sel.appendChild(new Option('— leer —', ''));
+    for (const e of Ex.all) {
+      const o = new Option(e.title + '  [' + e.source + ']', e.id);
+      sel.appendChild(o);
+    }
+  }
+  fillExamples($('exA'), false);
+  fillExamples($('exB'), true);
+
+  $('exA').addEventListener('change', function () {
+    const e = Ex.byId(this.value);
+    if (e) { $('dslA').value = e.dsl; refresh('A'); }
+  });
+  $('exB').addEventListener('change', function () {
+    const e = Ex.byId(this.value);
+    $('dslB').value = e ? e.dsl : '';
+    refresh('B');
+  });
+  $('clearB').addEventListener('click', function () { $('dslB').value = ''; $('exB').value = ''; refresh('B'); });
+
+  $('showA').addEventListener('click', function () { state.which = 'A'; redraw(); });
+  $('showB').addEventListener('click', function () { state.which = 'B'; redraw(); });
+
+  $('dslA').addEventListener('input', function () { $('exA').value = ''; refresh('A'); });
+  $('dslB').addEventListener('input', function () { $('exB').value = ''; refresh('B'); });
+  $('word').addEventListener('input', function () { runSimulation(); });
+
+  // ---------- Parsen und Badges ----------
+
+  function refresh(slot) {
+    const src = $('dsl' + slot).value;
+    const errEl = $('err' + slot), badgeEl = $('badges' + slot);
+    errEl.textContent = '';
+    badgeEl.innerHTML = '';
+    if (!src.trim()) { state[slot] = null; if (slot === state.which) redraw(); return; }
+    let A = null;
+    try { A = Au.parseDSL(src); }
+    catch (e) {
+      state[slot] = null;
+      errEl.textContent = (e.line ? 'Zeile ' + e.line + ': ' : '') + e.message;
+      if (slot === state.which) redraw();
+      return;
+    }
+    state[slot] = A;
+    renderBadges(badgeEl, A);
+    if (slot === state.which) redraw();
+    if (slot === state.which) runSimulation();
+  }
+
+  function badge(text, cls) {
+    const s = document.createElement('span');
+    s.className = 'badge' + (cls ? ' ' + cls : '');
+    s.textContent = text;
+    return s;
+  }
+
+  function renderBadges(el, A) {
+    el.appendChild(badge(A.theory === 'reals' ? 'ℝ, linear' : 'Gleichheit'));
+    el.appendChild(badge(A.params.length + ' Parameter'));
+    if (A.constants.length) el.appendChild(badge('Konstanten: ' + A.constants.join(' ')));
+    el.appendChild(badge(A.states.length + ' Zustände, ' + A.transitions.length + ' Transitionen'));
+    let det;
+    try { det = Au.determinismCheck(A); }
+    catch (e) { el.appendChild(badge('Determinismus: ' + e.message, 'warn')); return; }
+    if (det.disjoint && det.complete) el.appendChild(badge('deterministisch per Belegung', 'ok'));
+    else {
+      for (const p of det.problems.slice(0, 3)) {
+        const t = p.kind === 'overlap'
+          ? 'nicht disjunkt in ' + Au.displayState(p.state) + ': ' + p.detail
+          : 'unvollständig in ' + Au.displayState(p.state) + ': ' + p.detail;
+        el.appendChild(badge(t, 'warn'));
+      }
+      if (det.problems.length > 3) el.appendChild(badge('… ' + (det.problems.length - 3) + ' weitere', 'warn'));
+    }
+  }
+
+  // ---------- Graph ----------
+
+  function currentAutomaton() { return state[state.which]; }
+
+  function redraw() {
+    updateGridVisibility();
+    const A = currentAutomaton();
+    $('graphWhich').textContent = state.which;
+    const svg = $('graph');
+    if (!A) { while (svg.firstChild) svg.removeChild(svg.firstChild); return; }
+    const highlight = new Map();
+    if (state.sim && state.sim.forAutomaton === A) {
+      const conf = state.sim.steps[Math.min(state.step, state.sim.steps.length - 1)].conf;
+      for (const [q, S] of conf) highlight.set(q, state.sim.theory.format(S));
+    }
+    D.render(svg, A, {
+      highlight: highlight,
+      onDrag: function (st, x, y) { writeBackPos(state.which, st, x, y); }
+    });
+  }
+
+  // pos-Zeile in die DSL zurückschreiben (Plan 8.1).
+  function writeBackPos(slot, st, x, y) {
+    const ta = $('dsl' + slot);
+    const lines = ta.value.split(/\r?\n/);
+    const re = new RegExp('^\\s*pos\\s+' + st.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s');
+    const newLine = 'pos ' + st + ' ' + x + ' ' + y;
+    let found = false;
+    for (let i = 0; i < lines.length; i++) {
+      if (re.test(lines[i])) { lines[i] = newLine; found = true; break; }
+    }
+    if (!found) lines.push(newLine);
+    const sel = ta.selectionStart;
+    ta.value = lines.join('\n');
+    ta.selectionStart = ta.selectionEnd = Math.min(sel, ta.value.length);
+    // Nicht neu zeichnen: der Zustand sitzt schon an der neuen Stelle.
+    try { state[slot] = Au.parseDSL(ta.value); } catch (e) { /* Fehler zeigt refresh */ }
+  }
+
+  // ---------- Simulation ----------
+
+  function runSimulation() {
+    const A = currentAutomaton();
+    const out = $('verdict');
+    const tbody = $('confTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    out.innerHTML = '';
+    state.sim = null;
+    if (!A) { $('stepRange').max = 0; $('stepLabel').textContent = ''; return; }
+    let word;
+    try { word = Au.parseWord(A, $('word').value); }
+    catch (e) { out.innerHTML = '<div class="verdict conflict">Wort: ' + esc(e.message) + '</div>'; return; }
+
+    const sim = Au.simulate(A, word);
+    sim.forAutomaton = A;
+    sim.word = word;
+    state.sim = sim;
+    state.step = Math.min(state.step, sim.steps.length - 1);
+    $('stepRange').max = sim.steps.length - 1;
+    $('stepRange').value = state.step;
+    updateStepLabel();
+
+    // Verdikt
+    const parts = [];
+    if (sim.accepted) {
+      const mu = sim.theory.witness(sim.acceptSet);
+      parts.push('<div class="verdict acc"><strong>akzeptiert</strong>' + (mu ? ' mit ' + esc(mu.text) : '') + '</div>');
+    }
+    if (sim.complementAccepted) {
+      const q = A.complement.filter(function (s) { return sim.final.has(s); })[0];
+      const mu = sim.theory.witness(sim.complementSet);
+      parts.push('<div class="verdict comp"><strong>komplement-akzeptiert</strong>' +
+        (q ? ' via ' + esc(Au.displayState(q)) : '') + (mu ? ' mit ' + esc(mu.text) : '') + '</div>');
+    }
+    if (sim.accepted && sim.complementAccepted) {
+      parts.push('<div class="verdict conflict">CFPA-Konflikt: das Wort ist gleichzeitig akzeptiert und komplement-akzeptiert. F_c ist zu groß.</div>');
+    }
+    if (!sim.accepted && !sim.complementAccepted) {
+      const lbl = A.complement.length
+        ? 'weder akzeptiert noch komplement-akzeptiert — bei einer CFPA ist das eine Lücke: L(C) ≠ L(A)ᶜ'
+        : 'nicht akzeptiert';
+      parts.push('<div class="verdict ' + (A.complement.length ? 'conflict' : 'none') + '">' + lbl + '</div>');
+    }
+    out.innerHTML = parts.join('');
+
+    // Tabelle
+    sim.steps.forEach(function (s, i) {
+      const tr = document.createElement('tr');
+      const cells = [];
+      cells.push(String(i));
+      cells.push(i === 0 ? '—' : esc(sim.theory.formatLetter ? sim.theory.formatLetter(s.letter) : String(s.letter)));
+      const confs = [];
+      for (const [q, S] of s.conf) confs.push(Au.displayState(q) + ': ' + sim.theory.format(S));
+      cells.push(confs.length ? esc(confs.join('   |   ')) : '<em>keine</em>');
+      tr.innerHTML = '<td>' + cells[0] + '</td><td class="mono">' + cells[1] + '</td><td class="mono">' + cells[2] + '</td>';
+      if (i === state.step) tr.style.background = 'var(--accent-soft)';
+      tr.addEventListener('click', function () { state.step = i; $('stepRange').value = i; updateStepLabel(); redraw(); markRow(); });
+      tbody.appendChild(tr);
+    });
+    redraw();
+  }
+
+  function markRow() {
+    const rows = $('confTable').querySelectorAll('tbody tr');
+    rows.forEach(function (r, i) { r.style.background = i === state.step ? 'var(--accent-soft)' : ''; });
+  }
+
+  function updateStepLabel() {
+    const sim = state.sim;
+    if (!sim) { $('stepLabel').textContent = ''; return; }
+    $('stepLabel').textContent = 'Schritt ' + state.step + ' / ' + (sim.steps.length - 1);
+  }
+
+  function setStep(i) {
+    if (!state.sim) return;
+    state.step = Math.max(0, Math.min(i, state.sim.steps.length - 1));
+    $('stepRange').value = state.step;
+    updateStepLabel();
+    redraw();
+    markRow();
+  }
+  $('stepFirst').addEventListener('click', function () { setStep(0); });
+  $('stepPrev').addEventListener('click', function () { setStep(state.step - 1); });
+  $('stepNext').addEventListener('click', function () { setStep(state.step + 1); });
+  $('stepAll').addEventListener('click', function () { setStep(state.sim ? state.sim.steps.length - 1 : 0); });
+  $('stepRange').addEventListener('input', function () { setStep(parseInt(this.value, 10)); });
+
+  // ---------- Operationen ----------
+
+  document.querySelectorAll('[data-op]').forEach(function (btn) {
+    btn.addEventListener('click', function () { doOperation(this.getAttribute('data-op')); });
+  });
+
+  function doOperation(op) {
+    const note = $('opNote');
+    note.textContent = '';
+    const A = state.A, B = state.B;
+    const target = $('opSlot').value;
+    try {
+      let R = null, msg = '';
+      switch (op) {
+        case 'sync': {
+          need(A, 'A'); need(B, 'B');
+          const det = Au.determinismCheck(A);
+          R = Au.synchronizedProduct(A, B);
+          R = Au.removeUnreachable(Au.simplifyLabels(R));
+          msg = 'Synchronisiertes Produkt mit der CFPA-Belegung aus CIAA Thm. 2, vereinfacht und ohne unerreichbare Zustände.';
+          if (!(det.disjoint && det.complete)) {
+            msg += ' Achtung: A ist nicht deterministisch per Belegung, die Voraussetzung des Theorems ist also verletzt.';
+          }
+          msg += ' Dass B universell und ein Skolem-Automat ist, prüft die Seite nur beschränkt.';
+          break;
+        }
+        case 'inter': need(A, 'A'); need(B, 'B'); R = Au.intersectionProduct(A, B);
+          msg = 'Direktes Produkt: die Parameter von B wurden umbenannt.'; break;
+        case 'union': need(A, 'A'); need(B, 'B'); R = Au.unionProduct(A, B);
+          msg = 'Vereinigung. Sinnvoll nur, wenn beide Automaten vollständig sind, sonst vorher einen Sink hinzufügen.'; break;
+        case 'complement': need(A, 'A'); R = Au.complementCFPA(A);
+          msg = 'F und F_c vertauscht. Das ist genau dann das Komplement, wenn A eine CFPA ist.'; break;
+        case 'sink': need(A, 'A'); R = Au.addSink(A);
+          msg = 'Fehlende Fälle gehen in einen schwachen Sink. Nur bei disjunkten Formeln bleibt der Automat deterministisch per Belegung.'; break;
+        case 'fc': {
+          need(A, 'A');
+          const fc = Au.largestFc(A);
+          R = Au.cloneAutomaton(A);
+          R.complement = fc;
+          msg = 'Größtes mögliches F_c = {' + fc.map(Au.displayState).join(', ') + '}. Ob damit L(C) = L(A)ᶜ gilt, also ob A überhaupt eine CFPA ist, bleibt unentscheidbar.';
+          break;
+        }
+        case 'simplify': need(A, 'A'); R = Au.simplifyLabels(A); msg = 'Redundante Konjunkte und unerfüllbare Transitionen entfernt.'; break;
+        case 'prune': need(A, 'A'); R = Au.removeUnreachable(A); msg = 'Vom Initialzustand nicht erreichbare Zustände entfernt.'; break;
+      }
+      if (!R) return;
+      $('dsl' + target).value = Au.toDSL(R);
+      $('ex' + target).value = '';
+      refresh(target);
+      state.which = target;
+      redraw();
+      note.textContent = msg;
+    } catch (e) {
+      note.textContent = 'Fehler: ' + e.message;
+    }
+  }
+
+  function need(A, name) { if (!A) throw new Error('Slot ' + name + ' enthält keinen gültigen Automaten'); }
+
+  // ---------- Prüfungen ----------
+
+  document.querySelectorAll('[data-check]').forEach(function (btn) {
+    btn.addEventListener('click', function () { doCheck(this.getAttribute('data-check')); });
+  });
+
+  function checkOpts() {
+    const maxLen = parseInt($('maxLen').value, 10);
+    const gridSrc = $('grid').value.trim();
+    const grid = gridSrc ? gridSrc.split(/[,\s]+/).filter(Boolean) : Au.DEFAULT_GRID;
+    return { maxLen: isNaN(maxLen) ? 4 : maxLen, grid: grid };
+  }
+
+  function out(html) {
+    const d = document.createElement('div');
+    d.className = 'result-line';
+    d.innerHTML = html;
+    $('checkOut').insertBefore(d, $('checkOut').firstChild);
+    return d;
+  }
+
+  function witnessLink(text, word, A) {
+    const span = '<span class="witness-link" data-word="' + esc(Au.formatWord(A, word)) + '">' + esc(text) + '</span>';
+    return span;
+  }
+
+  $('checkOut').addEventListener('click', function (ev) {
+    const t = ev.target;
+    if (!t.classList.contains('witness-link')) return;
+    const w = t.getAttribute('data-word');
+    $('word').value = w === 'ε' ? '' : w;
+    runSimulation();
+  });
+
+  function doCheck(kind) {
+    const A = state.A, B = state.B;
+    const o = checkOpts();
+    try {
+      switch (kind) {
+        case 'empty': {
+          need(A, 'A');
+          const r = Au.emptinessCheck(A);
+          if (r.empty) out('<span class="tag">exakt</span> L(A) ist <strong>leer</strong>.');
+          else {
+            const w = r.witness;
+            out('<span class="tag">exakt</span> L(A) ist <strong>nichtleer</strong>' +
+              (w ? ', Zeuge: ' + witnessLink(w.wordText, w.word, A) + ' mit ' + esc(w.mu) : '') + '.');
+          }
+          break;
+        }
+        case 'det': {
+          need(A, 'A');
+          const r = Au.determinismCheck(A);
+          if (r.disjoint && r.complete) out('<span class="tag">exakt</span> A ist <strong>deterministisch per Belegung</strong> (disjunkt und vollständig).');
+          else {
+            const lines = r.problems.map(function (p) {
+              return p.kind === 'overlap'
+                ? 'nicht disjunkt in ' + esc(Au.displayState(p.state)) + ': ' + esc(p.detail)
+                : 'unvollständig in ' + esc(Au.displayState(p.state)) + ': ' + esc(p.detail);
+            });
+            out('<span class="tag">exakt</span> A ist nicht deterministisch per Belegung:<br>' + lines.join('<br>'));
+          }
+          break;
+        }
+        case 'cfpa': {
+          need(A, 'A');
+          if (!A.complement.length) { out('A hat keine complement-Zeile, es gibt nichts zu prüfen.'); break; }
+          const r = Au.checkCFPAConsistency(A, o);
+          const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
+          if (r.ok) out(tag + 'kein Gegenbeispiel zur XOR-Konsistenz gefunden. Das ist <em>kein Beweis</em>, dass A eine CFPA ist.');
+          else {
+            const bits = [];
+            if (r.firstConflict) bits.push('Konflikt (beides): ' + witnessLink(r.firstConflict.text, r.firstConflict.word, A));
+            if (r.firstGap) bits.push('Lücke (keines): ' + witnessLink(r.firstGap.text, r.firstGap.word, A));
+            out(tag + '<strong>Gegenbeispiel gefunden.</strong> ' + bits.join(' · '));
+          }
+          break;
+        }
+        case 'sdpa': {
+          need(A, 'A');
+          const r = Au.checkSDPA(A, o);
+          const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
+          if (r.ok) out(tag + 'jedes geprüfte Wort vollendet genau einen Lauf.');
+          else out(tag + '<strong>kein SDPA:</strong> ' + witnessLink(r.witness.text, r.witness.word, A) + ' vollendet ' + r.witness.count + ' Läufe.');
+          break;
+        }
+        case 'uni': {
+          need(B, 'B');
+          const r = Au.checkUniversality(B, o);
+          const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
+          if (r.universal) out(tag + 'kein Gegenbeispiel zur Universalität von B gefunden. <em>Kein Beweis.</em>');
+          else out(tag + 'B ist <strong>nicht universell</strong>, Zeuge: ' + witnessLink(r.witness.text, r.witness.word, B));
+          break;
+        }
+        case 'equiv': {
+          need(A, 'A'); need(B, 'B');
+          const r = Au.checkEquivalence(A, B, o);
+          const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
+          if (r.equivalent) out(tag + 'A und B stimmen auf allen geprüften Wörtern überein. <em>Kein Beweis.</em>');
+          else out(tag + '<strong>nicht äquivalent</strong>: ' + witnessLink(r.witness.text, r.witness.word, A) +
+            ' ist ' + (r.witness.inA ? 'in L(A), aber nicht in L(B)' : 'in L(B), aber nicht in L(A)') + '.');
+          break;
+        }
+        case 'skolem': {
+          need(A, 'A'); need(B, 'B');
+          const r = Au.checkSkolem(A, B, o);
+          if (r.reason) { out('<span class="tag">syntaktisch</span> ' + esc(r.reason)); break; }
+          const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
+          if (r.ok) out(tag + 'Bedingung 3 der Skolem-Definition ist auf allen geprüften Wörtern erfüllt. <em>Kein Beweis.</em>');
+          else out(tag + '<strong>Bedingung 3 verletzt</strong> bei ' + witnessLink(r.witness.text, r.witness.word, A) + ' mit ' + esc(r.witness.mu));
+          break;
+        }
+      }
+    } catch (e) {
+      out('<span class="tag">Fehler</span> ' + esc(e.message));
+    }
+  }
+
+  // ---------- Teilen ----------
+
+  $('mkLink').addEventListener('click', function () {
+    const parts = [];
+    parts.push('a=' + encodeURIComponent($('dslA').value));
+    if ($('dslB').value.trim()) parts.push('b=' + encodeURIComponent($('dslB').value));
+    if ($('word').value.trim()) parts.push('w=' + encodeURIComponent($('word').value));
+    const url = location.origin + location.pathname + '#' + parts.join('&');
+    history.replaceState(null, '', '#' + parts.join('&'));
+    $('linkOut').textContent = url;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+  });
+
+  function loadFromHash() {
+    const h = location.hash.replace(/^#/, '');
+    if (!h) return false;
+    const params = {};
+    for (const kv of h.split('&')) {
+      const i = kv.indexOf('=');
+      if (i > 0) params[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+    }
+    if (!params.a) return false;
+    $('dslA').value = params.a;
+    if (params.b) $('dslB').value = params.b;
+    if (params.w) $('word').value = params.w;
+    return true;
+  }
+
+  // ---------- Theorieabhängige UI ----------
+
+  function updateGridVisibility() {
+    const A = currentAutomaton();
+    $('gridRow').style.display = (A && A.theory === 'equality') ? 'none' : '';
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  // ---------- Start ----------
+
+  if (!loadFromHash()) {
+    $('dslA').value = Ex.byId('C3').dsl;
+    $('exA').value = 'C3';
+    $('dslB').value = Ex.byId('A3').dsl;
+    $('exB').value = 'A3';
+    $('word').value = '1, 1/2, 8/5';
+  }
+  refresh('A');
+  refresh('B');
+  runSimulation();
+})();

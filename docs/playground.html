@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PA-Playground — infinite alphabets</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="site">
+  <span class="brand">infinite alphabets</span>
+  <nav>
+    <a href="index.html">Start</a>
+    <a href="playground.html" class="active">PA-Playground</a>
+    <a href="positions.html">Positionen</a>
+    <a href="semantics.html">Semantik</a>
+  </nav>
+</header>
+
+<main>
+  <div class="cols">
+
+    <!-- Spalte 1: Editoren -->
+    <div>
+      <div class="panel">
+        <h2>Slot A</h2>
+        <div class="field-row">
+          <select id="exA"></select>
+          <button id="showA">groß zeichnen</button>
+        </div>
+        <textarea id="dslA" spellcheck="false"></textarea>
+        <div class="badges" id="badgesA"></div>
+        <div class="error" id="errA"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Slot B</h2>
+        <div class="field-row">
+          <select id="exB"></select>
+          <button id="showB">groß zeichnen</button>
+          <button id="clearB">leeren</button>
+        </div>
+        <textarea id="dslB" class="small" spellcheck="false"></textarea>
+        <div class="badges" id="badgesB"></div>
+        <div class="error" id="errB"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Operationen</h2>
+        <p class="hint" id="opTarget">Das Ergebnis landet in:
+          <select id="opSlot"><option value="A">Slot A</option><option value="B" selected>Slot B</option></select>
+        </p>
+        <div class="btn-row">
+          <button data-op="sync">A ⊗ B synchronisiert (CFPA)</button>
+          <button data-op="inter">A ∩ B</button>
+          <button data-op="union">A ∪ B</button>
+        </div>
+        <div class="btn-row">
+          <button data-op="complement">Komplement (CFPA)</button>
+          <button data-op="sink">Vervollständigen (Sink)</button>
+          <button data-op="fc">größtes F_c</button>
+        </div>
+        <div class="btn-row">
+          <button data-op="simplify">Labels vereinfachen</button>
+          <button data-op="prune">unerreichbare entfernen</button>
+        </div>
+        <p class="hint" id="opNote"></p>
+      </div>
+    </div>
+
+    <!-- Spalte 2: Graph -->
+    <div>
+      <div class="panel">
+        <h2>Graph <span id="graphWhich" class="mono"></span></h2>
+        <div class="graph-wrap"><svg class="graph" id="graph"></svg></div>
+        <div class="legend">
+          <span><i class="acc"></i> akzeptierend</span>
+          <span><i class="comp"></i> komplement-akzeptierend</span>
+          <span><i class="weak"></i> schwach</span>
+          <span>Zustände sind ziehbar; die pos-Zeilen werden zurückgeschrieben.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Wort</h2>
+        <div class="field-row">
+          <input type="text" id="word" placeholder="1, 2, 3   bzw.   abacb">
+        </div>
+        <div class="stepper">
+          <button id="stepFirst">⏮</button>
+          <button id="stepPrev">◀</button>
+          <input type="range" id="stepRange" min="0" max="0" value="0">
+          <button id="stepNext">▶</button>
+          <button id="stepAll">alle</button>
+          <span class="mono" id="stepLabel"></span>
+        </div>
+        <div id="verdict"></div>
+        <table id="confTable">
+          <thead><tr><th>Schritt</th><th>Buchstabe</th><th>Konfigurationen</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Spalte 3: Prüfungen -->
+    <div>
+      <div class="panel">
+        <h2>Prüfungen</h2>
+        <div class="field-row">
+          <label>Wortlänge ≤ <input type="text" id="maxLen" value="4" style="width:3.2rem"></label>
+        </div>
+        <div class="field-row" id="gridRow">
+          <label>Gitter <input type="text" id="grid" value="0, 1/2, 1, 3/2, 2, 5/2, 3"></label>
+        </div>
+        <div class="btn-row">
+          <button data-check="empty">Leerheit A (exakt)</button>
+          <button data-check="det">Determinismus A (exakt)</button>
+        </div>
+        <div class="btn-row">
+          <button data-check="cfpa">CFPA-Konsistenz A</button>
+          <button data-check="sdpa">SDPA-Check A</button>
+          <button data-check="uni">Universalität B</button>
+        </div>
+        <div class="btn-row">
+          <button data-check="equiv">A ≡ B</button>
+          <button data-check="skolem">Skolem (A, B)</button>
+        </div>
+        <div id="checkOut"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Teilen</h2>
+        <div class="btn-row">
+          <button id="mkLink">Link mit A, B und Wort erzeugen</button>
+        </div>
+        <p class="hint" id="linkOut"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Was hier exakt ist</h2>
+        <p class="hint">
+          Mitgliedschaft, Parametermengen, Leerheit, Determinismus und die Produkte sind exakt
+          über den rationalen Zahlen gerechnet. Alles, was über <em>alle</em> Wörter quantifiziert
+          (Universalität, CFPA-Eigenschaft, Skolem-Bedingung, SDPA), wird nur bis zur eingestellten
+          Länge geprüft. Ein negatives Ergebnis ist dann ein echter Zeuge, ein positives nur
+          „kein Gegenbeispiel gefunden“. Universalität von PA ist unentscheidbar.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site">
+  Semantik nach Alber und Rümmer, CIAA und ATVA. Eigenständige JS-Implementierung, keine Bibliothek der Autoren.
+</footer>
+
+<script src="assets/js/fraction.js"></script>
+<script src="assets/js/intervals.js"></script>
+<script src="assets/js/formula.js"></script>
+<script src="assets/js/theory-eq.js"></script>
+<script src="assets/js/theory-real.js"></script>
+<script src="assets/js/automaton.js"></script>
+<script src="assets/js/examples.js"></script>
+<script src="assets/js/draw.js"></script>
+<script src="assets/js/playground.js"></script>
+</body>
+</html>

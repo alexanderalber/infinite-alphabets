@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semantik — infinite alphabets</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<header class="site">
+  <span class="brand">infinite alphabets</span>
+  <nav>
+    <a href="index.html">Start</a>
+    <a href="playground.html">PA-Playground</a>
+    <a href="positions.html">Positionen</a>
+    <a href="semantics.html" class="active">Semantik</a>
+  </nav>
+</header>
+
+<main class="prose">
+  <h1>Was genau gerechnet wird</h1>
+  <p>
+    Diese Seite beschreibt die Semantik, die der Playground implementiert, damit nachvollziehbar
+    ist, was hinter einem Ergebnis steht. Die Definitionen folgen den Papern, nicht den
+    Konventionen einer Bibliothek.
+  </p>
+
+  <h2>Die Sprache</h2>
+  <p>Ein Automat wird zeilenweise beschrieben. <code>#</code> beginnt einen Kommentar.</p>
+<pre><code>theory reals                  # oder: theory equality
+states q0 q1 q2
+initial q0
+accepting q1
+complement q2                 # optional: komplement-akzeptierende Zustände (CFPA)
+q0 -&gt; q0 : x &lt; y
+q0 -&gt; q1 : x = y
+q0 -&gt; q2 : x &gt; y
+q1 -&gt; q2 : true
+q2 -&gt; q2 : true
+pos q0 0 0                    # optional: Layout in Rastereinheiten
+</code></pre>
+  <p>
+    Zustandsnamen sind Bezeichner oder geklammerte Tupel wie <code>(q0,r1)</code>. Genau ein
+    Zustand ist initial; <code>accepting</code> und <code>complement</code> sind disjunkt.
+    Zustände ohne Rolle sind schwach, wenn eine <code>complement</code>-Zeile existiert.
+    Der gelesene Buchstabe heißt <code>x</code>, Parameter heißen <code>y</code> oder
+    <code>y1</code>, <code>y2</code>, …
+  </p>
+  <p>
+    In Formeln sind <code>and or not true false</code> und ihre Unicode-Formen erlaubt,
+    Vergleichsketten wie <code>y &lt;= x &lt;= y+1</code> stehen für die Konjunktion.
+    Über den reellen Zahlen sind Terme linear in <code>x</code> und <code>y</code> mit rationalen
+    Koeffizienten; in der Gleichheitstheorie sind nur <code>=</code> und <code>≠</code> gegen
+    Parameter oder Konstanten erlaubt.
+  </p>
+
+  <h2>Konfigurationsmengen</h2>
+  <p>
+    Sei Θ die Menge aller Parameterbelegungen. Eine Konfiguration ist ein Paar (q, S) mit
+    S ⊆ Θ, gelesen als: es gibt einen Lauf des bisher gelesenen Präfixes, der in q endet, genau
+    für die Belegungen in S. Gestartet wird mit (q₀, Θ). Beim Lesen von w<sub>i</sub> wird für
+    jede Transition (q, φ, q′) die Menge S auf {μ | φ(w<sub>i</sub>, μ)} eingeschränkt; nichtleere
+    Ergebnisse werden pro Zielzustand vereinigt. Das ist korrekt, weil Akzeptanz existenziell
+    über μ und über Läufe quantifiziert.
+  </p>
+  <p>
+    Akzeptiert wird, wenn die Vereinigung über die akzeptierenden Zustände nichtleer ist;
+    komplement-akzeptiert analog über <code>complement</code>. Für den SDPA-Check wird dieselbe
+    Rechnung ohne das Vereinigen ausgeführt, weil dort Läufe und nicht Zustände gezählt werden.
+  </p>
+
+  <h2>Die Gleichheitstheorie</h2>
+  <p>
+    Atome sind <code>x = t</code> und <code>x ≠ t</code>; Parameter werden nie miteinander
+    verglichen. Für ein Wort w mit Buchstabenmenge L<sub>w</sub> und Konstantenmenge C sei
+    L = L<sub>w</sub> ∪ C. Zwei Belegungen verhalten sich auf w identisch, wenn jeder Parameter
+    entweder denselben Wert in L hat oder in beiden Belegungen außerhalb von L liegt. Θ zerfällt
+    also in (|L|+1)<sup>k</sup> Klassen, und die Simulation rechnet auf diesen Klassen exakt.
+  </p>
+  <p>
+    Für die Projektion ∃x. φ und für die Leerheitssuche genügen diese Klassen nicht: dort gibt es
+    kein Wort, relativ zu dem „frisch“ definiert wäre, und ob zwei Parameter gleich sind,
+    beeinflusst das Ergebnis. Dafür wird eine zweite Darstellung benutzt: Partitionen von
+    {y₁…y<sub>k</sub>} ∪ C, in denen Konstanten paarweise in verschiedenen Blöcken liegen.
+  </p>
+
+  <h2>Die reelle Theorie</h2>
+  <p>
+    Ein Parameter, lineare Atome. Parametermengen sind endliche Vereinigungen von Intervallen mit
+    rationalen Endpunkten, exakt als Brüche gerechnet. Für die Einschränkung wird x durch den
+    Buchstaben ersetzt; jedes Atom wird zu einer Halbgeraden, einem Punkt oder deren Komplement.
+  </p>
+  <p>
+    Die Projektion {y | ∃x. φ(x,y)} nutzt, dass die Struktur der Menge {x | φ(x,y)} sich nur an
+    endlich vielen kritischen y-Werten ändert: an den Schnittpunkten der Randgeraden und an den
+    Nullstellen der Atome ohne x. Zwischen zwei solchen Werten ist die Ordnung aller Randpunkte
+    konstant. Pro Zelle genügt daher ein Stichprobenwert. Das ist eine eindimensionale
+    zylindrische Zerlegung und damit exakt, nicht heuristisch.
+  </p>
+
+  <h2>Was exakt entschieden wird</h2>
+  <ul>
+    <li><strong>Mitgliedschaft</strong> und die Parametermenge pro Zustand, für jedes eingegebene Wort.</li>
+    <li><strong>Leerheit</strong> von L(A): Erreichbarkeit im endlichen Graphen der Paare (q, S), wobei S der
+      Schnitt der Projektionen der benutzten Transitionsformeln ist. Für einen festen Pfad sind die
+      Buchstaben unabhängig, nur μ ist geteilt; der Pfad ist genau dann durchlaufbar, wenn dieser Schnitt
+      nichtleer ist. Ein Zeuge wird konstruiert.</li>
+    <li><strong>Determinismus per Belegung</strong>: paarweise Disjunktheit der ausgehenden Formeln und
+      Vollständigkeit, beides über ∃x∃y entschieden.</li>
+    <li><strong>Produkte</strong>, Komplement einer CFPA, Vervollständigung und die Vereinfachung der
+      Labels.</li>
+    <li><strong>Größtes F<sub>c</sub></strong> in der Gleichheitstheorie, über Leerheit des direkten
+      Produkts A × A[F := {q}].</li>
+  </ul>
+
+  <h2>Was nur beschränkt geprüft wird</h2>
+  <p>
+    Universalität, die CFPA-Konsistenz, die Skolem-Bedingung, Äquivalenz und die SDPA-Eigenschaft
+    quantifizieren über alle Wörter. Der Playground zählt Wörter bis zu einer Länge auf und meldet
+    ehrlich, was er geprüft hat. Ein gefundenes Gegenbeispiel ist exakt und endgültig; das Ausbleiben
+    eines Gegenbeispiels ist kein Beweis.
+  </p>
+  <p>
+    In der Gleichheitstheorie ist die Aufzählung bis zur Längenschranke vollständig, weil die Sprachen
+    unter Bijektionen invariant sind, die die Konstanten fixieren: es genügen die kanonischen Wörter.
+    Über den reellen Zahlen ist die Gitteraufzählung eine Heuristik, und sie ist als solche beschriftet.
+  </p>
+
+  <h2>Grenzen dieser Fassung</h2>
+  <ul>
+    <li>Über den reellen Zahlen ist genau ein Parameter erlaubt. Mehrere bräuchten Polyeder statt
+      Intervalle und Projektion per Fourier-Motzkin.</li>
+    <li>Keine ε-Transitionen.</li>
+    <li>Die Entscheidungsprozedur für Universalität von 1-VA (Vektoradditionssysteme) ist nicht
+      implementiert.</li>
+  </ul>
+</main>
+
+<footer class="site">
+  Semantik nach Alber und Rümmer, CIAA und ATVA.
+</footer>
+
+</body>
+</html>
