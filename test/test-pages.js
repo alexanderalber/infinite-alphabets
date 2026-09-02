@@ -308,6 +308,31 @@ async function main() {
       check('playground: Graph nach Reload gezeichnet', back.states === 4, String(back.states));
       check('playground: Simulation nach Reload gelaufen', back.rows === 4, String(back.rows));
 
+      // Slotwechsel: das Wort laeuft auf dem gezeigten Automaten, also muessen
+      // Markierung und Tabelle nach dem Umschalten zu B gehoeren. Vorher blieb
+      // die Simulation von A stehen, der B-Graph war unmarkiert.
+      // Das Wort ist eines, das A3 ueberlebt: bei 1, 1/2, 8/5 ist die
+      // Konfiguration im letzten Schritt leer, dann gibt es zu Recht nichts zu
+      // markieren, und der Test pruefte nicht mehr, was er pruefen soll.
+      const slot = await evaluate(`(function(){
+        document.getElementById('dslA').value = Examples.byId('C3').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('dslB').value = Examples.byId('A3').dsl;
+        document.getElementById('dslB').dispatchEvent(new Event('input'));
+        document.getElementById('word').value = '1, 1/2, 3/4';
+        document.getElementById('word').dispatchEvent(new Event('input'));
+        document.getElementById('showB').click();
+        return { states: document.querySelectorAll('#graph .state').length,
+                 hot: document.querySelectorAll('#graph .state.hot').length,
+                 rows: document.querySelectorAll('#confTable tbody tr').length };
+      })()`);
+      check('playground: Slot B gezeichnet', slot.states === 1, String(slot.states));
+      check('playground: Slot B markiert nach dem Umschalten', slot.hot === 1, 'markiert: ' + slot.hot);
+      check('playground: Tabelle gehoert zu Slot B', slot.rows === 4, String(slot.rows));
+
+      // Zurueck auf Slot A, damit die folgenden Pruefungen wieder dort messen.
+      await evaluate(`document.getElementById('showA').click()`);
+
       // Automat ohne Parameter: das Verdikt darf kein leeres "mit ()" zeigen,
       // und der Graph darf am Rand nichts abschneiden.
       const noParams = await evaluate(`(function(){
@@ -377,6 +402,18 @@ async function main() {
       // Zurueck zum Ausgangszustand fuer die folgenden Pruefungen.
       await send('Page.navigate', { url: base + page + '?lang=de' }, sid);
       await wait(1200);
+
+      // "clear" in Slot B bleibt geleert. Die Startbefuellung haengt an einem
+      // Promise (Share.decode ist async) und schrieb spaeter A3 zurueck, obwohl
+      // inzwischen geleert worden war.
+      const cleared = await evaluate(`(async function(){
+        document.getElementById('clearB').click();
+        await new Promise(function(r){ setTimeout(r, 300); });
+        return { dsl: document.getElementById('dslB').value,
+                 sel: document.getElementById('exB').value };
+      })()`);
+      check('playground: geleerter Slot B bleibt leer', cleared.dsl === '', cleared.dsl.slice(0, 60));
+      check('playground: Auswahl in B bleibt leer', cleared.sel === '', cleared.sel);
 
       // Pruefung durchklicken
       const chk = await evaluate(`(function(){

@@ -49,8 +49,15 @@
   });
   $('clearB').addEventListener('click', function () { $('dslB').value = ''; $('exB').value = ''; refresh('B'); });
 
-  $('showA').addEventListener('click', function () { state.which = 'A'; redraw(); });
-  $('showB').addEventListener('click', function () { state.which = 'B'; redraw(); });
+  // Der Slotwechsel muss die Simulation neu rechnen, nicht nur neu zeichnen.
+  // Das Wort gehoert zum gezeigten Automaten: die Konfigurationstabelle und die
+  // Markierungen im Graphen stammen aus state.sim, und redraw() markiert nur,
+  // wenn sim.forAutomaton der gezeigte Automat ist. Ohne den Neulauf blieb nach
+  // dem Umschalten auf B die Simulation von A stehen, also unmarkierter Graph
+  // und eine Tabelle, die zum falschen Automaten gehoerte.
+  function showSlot(slot) { state.which = slot; runSimulation(); redraw(); }
+  $('showA').addEventListener('click', function () { showSlot('A'); });
+  $('showB').addEventListener('click', function () { showSlot('B'); });
 
   $('dslA').addEventListener('input', function () { $('exA').value = ''; refresh('A'); });
   $('dslB').addEventListener('input', function () { $('exB').value = ''; refresh('B'); });
@@ -289,8 +296,7 @@
       $('dsl' + target).value = Au.toDSL(R);
       $('ex' + target).value = '';
       refresh(target);
-      state.which = target;
-      redraw();
+      showSlot(target);
       note.textContent = msg;
     } catch (e) {
       note.textContent = T().f('pg.op.err', e.message);
@@ -455,8 +461,7 @@
       }
       $('ex' + target).value = '';
       refresh(target);
-      state.which = target;
-      redraw();
+      showSlot(target);
       $('famNote').textContent = note;
     });
   });
@@ -550,8 +555,19 @@
     loadFromHash().then(function (ok) { if (ok) start(); });
   });
 
+  // Die Startbefuellung darf nur eine unberuehrte Seite treffen. Share.decode ist
+  // async, also laeuft dieser Zweig fruehestens einen Microtask spaeter, bei einem
+  // gepackten Hash sogar erst nach dem DecompressionStream. Wer in der Zwischenzeit
+  // schon geklickt oder getippt hat, bekam seine Eingabe von den Vorgaben wieder
+  // ueberschrieben: nach "clear" in Slot B stand dort ohne weiteres Zutun erneut A3.
+  let touched = false;
+  const markTouched = function () { touched = true; };
+  for (const id of ['dslA', 'dslB', 'word']) $(id).addEventListener('input', markTouched);
+  for (const id of ['exA', 'exB']) $(id).addEventListener('change', markTouched);
+  $('clearB').addEventListener('click', markTouched);
+
   loadFromHash().then(function (fromHash) {
-    if (!fromHash) {
+    if (!fromHash && !touched) {
       $('dslA').value = Ex.byId('C3').dsl;
       $('exA').value = 'C3';
       $('dslB').value = Ex.byId('A3').dsl;
