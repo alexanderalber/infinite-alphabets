@@ -1,0 +1,9 @@
+# Whitelist: nur was zur Seite gehoert, wird versioniert.
+*
+!.gitignore
+!README.md
+!CLAUDE.md
+!docs/
+!docs/**
+!test/
+!test/**
