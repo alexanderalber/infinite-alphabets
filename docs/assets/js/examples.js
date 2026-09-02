@@ -155,8 +155,10 @@ pos (q2,r1) 2 1
 `, ['ciaa', 'cfpa']);
 
   add('CFFSA2', 'Endlicher Automat als CFPA (n = 2)', 'CIAA, Fig. 7',
-    'Sprache (a+b)*b(a+b)ⁿ über den Konstanten a und b. Der minimale DFA hat 2ⁿ⁺¹ Zustände, ' +
-    'die CFPA-Form 3(n+1). s₁ ist unerreichbar, s₀ übernimmt seine Rolle.', `
+    'Der n-te Buchstabe von hinten ist ein b, hier n = 2, über den Konstanten a und b. ' +
+    'Der minimale DFA hat 2ⁿ⁺¹ Zustände, die CFPA-Form O(n). Die beiden Nebenspuren fangen ' +
+    'die Wörter ab, deren n-ter Buchstabe von hinten ein a ist, und die zu kurzen Wörter. ' +
+    's₁ ist unerreichbar, s₀ übernimmt seine Rolle.', `
 theory equality
 states s0 q0 q1 q2 p0 p1 p2 s1 s2
 initial s0
@@ -257,28 +259,44 @@ pos q1 1 0
     return lines.join('\n');
   }
 
-  // CIAA Fig. 7 für beliebiges n: drei Spuren q, p, s mit je n+1 Zuständen.
+  // CIAA Fig. 7 fuer beliebiges n: drei Spuren q, p, s mit je n+1 Zustaenden.
+  // Sprache: der n-te Buchstabe von hinten ist ein b, also (a+b)*b(a+b)^{n-1}.
+  // Der Startzustand s0 uebernimmt die Rolle der drei epsilon-Kanten der Abbildung
+  // und damit auch die von s1, das dadurch unerreichbar wird und entfaellt.
   function cffsa(n) {
+    const AB = 'x = a or x = b';
     const lines = ['theory equality'];
-    const q = [], p = [];
+    const q = [], p = [], sTrack = [];
     for (let i = 0; i <= n; i++) { q.push('q' + i); p.push('p' + i); }
-    const states = ['s0'].concat(q, p, ['s' + n]);
+    // s-Spur: s1..sn zaehlt die Woerter mit weniger als n Buchstaben ab; s1 faellt weg.
+    for (let i = 2; i <= n; i++) sTrack.push('s' + i);
+    const states = ['s0'].concat(q, p, sTrack);
     lines.push('states ' + states.join(' '));
     lines.push('initial s0');
     lines.push('accepting q' + n);
-    lines.push('complement ' + ['s0'].concat(['p' + n], ['s' + n]).join(' '));
-    const AB = 'x = a or x = b';
+    lines.push('complement ' + ['s0', 'p' + n].concat(sTrack).join(' '));
+
+    // s0 vereinigt die Ausgaenge von q0, p0 und s1.
     lines.push('s0 -> q0 : ' + AB);
     lines.push('s0 -> q1 : x = b');
     lines.push('s0 -> p0 : ' + AB);
     lines.push('s0 -> p1 : x = a');
-    lines.push('s0 -> s' + n + ' : ' + AB);
+    if (n >= 2) lines.push('s0 -> s2 : ' + AB);
+
     lines.push('q0 -> q0 : ' + AB);
     lines.push('q0 -> q1 : x = b');
     for (let i = 1; i < n; i++) lines.push('q' + i + ' -> q' + (i + 1) + ' : ' + AB);
+
     lines.push('p0 -> p0 : ' + AB);
     lines.push('p0 -> p1 : x = a');
     for (let i = 1; i < n; i++) lines.push('p' + i + ' -> p' + (i + 1) + ' : ' + AB);
+
+    for (let i = 2; i < n; i++) lines.push('s' + i + ' -> s' + (i + 1) + ' : ' + AB);
+
+    lines.push('pos s0 0 1');
+    for (let i = 0; i <= n; i++) { lines.push('pos q' + i + ' ' + (i + 1) + ' 0'); }
+    for (let i = 0; i <= n; i++) { lines.push('pos p' + i + ' ' + (i + 1) + ' 2'); }
+    for (let i = 2; i <= n; i++) lines.push('pos s' + i + ' ' + i + ' 1');
     return lines.join('\n');
   }
 
