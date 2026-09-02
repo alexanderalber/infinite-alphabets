@@ -261,6 +261,96 @@ async function main() {
       check('playground: TikZ enthaelt tikzpicture', /\\begin\{tikzpicture\}/.test(tikz), tikz.slice(0, 120));
       check('playground: TikZ enthaelt alle 4 Zustaende', (tikz.match(/\\node\[/g) || []).length === 4, tikz.slice(0, 300));
 
+      // Teilen: Kodierung, Laenge und Roundtrip ueber einen echten Reload
+      const share = await evaluate(`(async function(){
+        document.getElementById('dslA').value = Examples.byId('C3').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('dslB').value = Examples.byId('A3').dsl;
+        document.getElementById('dslB').dispatchEvent(new Event('input'));
+        document.getElementById('word').value = '1, 1/2, 8/5';
+        document.getElementById('word').dispatchEvent(new Event('input'));
+        document.getElementById('mkLink').click();
+        await new Promise(function(r){ setTimeout(r, 300); });
+        const field = document.querySelector('#linkOut input');
+        const plainLen = ('a=' + encodeURIComponent(document.getElementById('dslA').value) +
+          '&b=' + encodeURIComponent(document.getElementById('dslB').value)).length;
+        const panel = document.getElementById('linkOut').getBoundingClientRect();
+        const parent = document.getElementById('linkOut').parentElement.getBoundingClientRect();
+        return { url: field ? field.value : '', hash: location.hash, plainLen: plainLen,
+                 fits: panel.right <= parent.right + 1 };
+      })()`);
+      check('playground: Link erzeugt', /#z=/.test(share.url), share.url.slice(0, 80));
+      check('playground: Link deutlich kuerzer als der Klartext',
+        share.url.length < share.plainLen / 2,
+        share.url.length + ' Zeichen gegen ' + share.plainLen + ' im Klartextformat');
+      check('playground: Link bleibt im Panel', share.fits, 'laeuft ueber den Rand');
+      check('playground: Hash gesetzt', share.hash.indexOf('#z=') === 0, share.hash.slice(0, 40));
+
+      // Reload mit dem Hash: dieselben Automaten und dasselbe Wort kommen zurueck.
+      await send('Page.navigate', { url: base + page + share.hash }, sid);
+      await wait(1200);
+      const back = await evaluate(`(function(){
+        return { a: document.getElementById('dslA').value,
+                 b: document.getElementById('dslB').value,
+                 w: document.getElementById('word').value,
+                 states: document.querySelectorAll('#graph .state').length,
+                 rows: document.querySelectorAll('#confTable tbody tr').length };
+      })()`);
+      check('playground: A kommt zurueck', /p0 -> p0/.test(back.a), back.a.slice(0, 60));
+      check('playground: B kommt zurueck', /y <= x <= y\+1/.test(back.b), back.b.slice(0, 60));
+      check('playground: Wort kommt zurueck', back.w === '1, 1/2, 8/5', back.w);
+      check('playground: Graph nach Reload gezeichnet', back.states === 4, String(back.states));
+      check('playground: Simulation nach Reload gelaufen', back.rows === 4, String(back.rows));
+
+      // Automat ohne Parameter: das Verdikt darf kein leeres "mit ()" zeigen,
+      // und der Graph darf am Rand nichts abschneiden.
+      const noParams = await evaluate(`(function(){
+        document.getElementById('dslA').value = Examples.byId('CFFSA2').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('word').value = 'ba';
+        document.getElementById('word').dispatchEvent(new Event('input'));
+        const svg = document.getElementById('graph');
+        const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+        const bb = svg.getBBox();
+        return { verdict: document.getElementById('verdict').textContent.trim(),
+                 exA: document.getElementById('exA').value,
+                 fits: bb.x >= vb[0] - 0.5 && bb.y >= vb[1] - 0.5 &&
+                       bb.x + bb.width <= vb[0] + vb[2] + 0.5 &&
+                       bb.y + bb.height <= vb[1] + vb[3] + 0.5 };
+      })()`);
+      check('playground: kein leeres "mit ()" im Verdikt', !/mit \(\)/.test(noParams.verdict), noParams.verdict);
+      check('playground: Verdikt trotzdem gesetzt', /akzeptiert/.test(noParams.verdict), noParams.verdict);
+      check('playground: Graph passt in die viewBox', noParams.fits, 'Inhalt ragt heraus');
+
+      // Beim Laden aus dem Hash soll das Dropdown das erkannte Beispiel zeigen.
+      const hashSel = await evaluate(`(async function(){
+        const hash = await Share.encode({ a: Examples.byId('CFFSA2').dsl, b: '', w: 'ba' });
+        location.hash = hash;
+        await new Promise(function(r){ setTimeout(r, 400); });
+        return { exA: document.getElementById('exA').value,
+                 exB: document.getElementById('exB').value };
+      })()`);
+      check('playground: Dropdown folgt dem Hash', hashSel.exA === 'CFFSA2', hashSel.exA);
+      check('playground: leerer Slot B zeigt kein Beispiel', hashSel.exB === '', hashSel.exB);
+
+      // Alte Klartext-Links muessen weiter funktionieren. Chrome navigiert bei reiner
+      // Hash-Aenderung nicht neu, deshalb wird der Hash im laufenden Tab gesetzt:
+      // das prueft zugleich den hashchange-Pfad.
+      const legacyDsl = 'theory reals\nstates q0 q1\ninitial q0\naccepting q1\nq0 -> q1 : x = y';
+      const legacy = await evaluate(`(async function(){
+        location.hash = 'a=' + encodeURIComponent(${JSON.stringify(legacyDsl)}) + '&w=5';
+        await new Promise(function(r){ setTimeout(r, 400); });
+        return { a: document.getElementById('dslA').value, w: document.getElementById('word').value,
+                 states: document.querySelectorAll('#graph .state').length };
+      })()`);
+      check('playground: altes Linkformat wird verstanden', /q0 -> q1/.test(legacy.a), legacy.a.slice(0, 60));
+      check('playground: altes Format mit Wort', legacy.w === '5', legacy.w);
+      check('playground: altes Format zeichnet', legacy.states === 2, String(legacy.states));
+
+      // Zurueck zum Ausgangszustand fuer die folgenden Pruefungen.
+      await send('Page.navigate', { url: base + page }, sid);
+      await wait(1200);
+
       // Pruefung durchklicken
       const chk = await evaluate(`(function(){
         document.getElementById('dslA').value = Examples.byId('C3').dsl;

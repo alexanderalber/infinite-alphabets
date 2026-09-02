@@ -161,13 +161,13 @@
     const parts = [];
     if (sim.accepted) {
       const mu = sim.theory.witness(sim.acceptSet);
-      parts.push('<div class="verdict acc"><strong>akzeptiert</strong>' + (mu ? ' mit ' + esc(mu.text) : '') + '</div>');
+      parts.push('<div class="verdict acc"><strong>akzeptiert</strong>' + (mu && mu.text ? ' mit ' + esc(mu.text) : '') + '</div>');
     }
     if (sim.complementAccepted) {
       const q = A.complement.filter(function (s) { return sim.final.has(s); })[0];
       const mu = sim.theory.witness(sim.complementSet);
       parts.push('<div class="verdict comp"><strong>komplement-akzeptiert</strong>' +
-        (q ? ' via ' + esc(Au.displayState(q)) : '') + (mu ? ' mit ' + esc(mu.text) : '') + '</div>');
+        (q ? ' via ' + esc(Au.displayState(q)) : '') + (mu && mu.text ? ' mit ' + esc(mu.text) : '') + '</div>');
     }
     if (sim.accepted && sim.complementAccepted) {
       parts.push('<div class="verdict conflict">CFPA-Konflikt: das Wort ist gleichzeitig akzeptiert und komplement-akzeptiert. F_c ist zu groß.</div>');
@@ -327,7 +327,7 @@
           else {
             const w = r.witness;
             out('<span class="tag">exakt</span> L(A) ist <strong>nichtleer</strong>' +
-              (w ? ', Zeuge: ' + witnessLink(w.wordText, w.word, A) + ' mit ' + esc(w.mu) : '') + '.');
+              (w ? ', Zeuge: ' + witnessLink(w.wordText, w.word, A) + (w.mu ? ' mit ' + esc(w.mu) : '') : '') + '.');
           }
           break;
         }
@@ -390,7 +390,7 @@
           if (r.reason) { out('<span class="tag">syntaktisch</span> ' + esc(r.reason)); break; }
           const tag = '<span class="tag">bis Länge ' + o.maxLen + ', ' + r.checked + ' Wörter</span> ';
           if (r.ok) out(tag + 'Bedingung 3 der Skolem-Definition ist auf allen geprüften Wörtern erfüllt. <em>Kein Beweis.</em>');
-          else out(tag + '<strong>Bedingung 3 verletzt</strong> bei ' + witnessLink(r.witness.text, r.witness.word, A) + ' mit ' + esc(r.witness.mu));
+          else out(tag + '<strong>Bedingung 3 verletzt</strong> bei ' + witnessLink(r.witness.text, r.witness.word, A) + (r.witness.mu ? ' mit ' + esc(r.witness.mu) : ''));
           break;
         }
       }
@@ -442,14 +442,37 @@
   // ---------- Teilen ----------
 
   $('mkLink').addEventListener('click', function () {
-    const parts = [];
-    parts.push('a=' + encodeURIComponent($('dslA').value));
-    if ($('dslB').value.trim()) parts.push('b=' + encodeURIComponent($('dslB').value));
-    if ($('word').value.trim()) parts.push('w=' + encodeURIComponent($('word').value));
-    const url = location.origin + location.pathname + '#' + parts.join('&');
-    history.replaceState(null, '', '#' + parts.join('&'));
-    $('linkOut').textContent = url;
-    if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+    const btn = this;
+    window.Share.encode({
+      a: $('dslA').value,
+      b: $('dslB').value.trim(),
+      w: $('word').value.trim()
+    }).then(function (hash) {
+      const url = location.origin + location.pathname + '#' + hash;
+      history.replaceState(null, '', '#' + hash);
+      const out = $('linkOut');
+      out.innerHTML = '';
+      const field = document.createElement('input');
+      field.type = 'text';
+      field.readOnly = true;
+      field.value = url;
+      field.addEventListener('focus', function () { this.select(); });
+      out.appendChild(field);
+      const info = document.createElement('span');
+      info.className = 'hint';
+      info.textContent = url.length + ' Zeichen';
+      out.appendChild(info);
+      field.select();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function () {
+          const old = btn.textContent;
+          btn.textContent = 'kopiert';
+          setTimeout(function () { btn.textContent = old; }, 1200);
+        }).catch(function () {});
+      }
+    }).catch(function (e) {
+      $('linkOut').textContent = 'Link konnte nicht erzeugt werden: ' + e.message;
+    });
   });
 
   $('mkTikz').addEventListener('click', function () {
@@ -462,19 +485,25 @@
     if (navigator.clipboard) navigator.clipboard.writeText(ta.value).catch(function () {});
   });
 
+  // Liefert true, wenn aus dem Hash geladen wurde.
   function loadFromHash() {
-    const h = location.hash.replace(/^#/, '');
-    if (!h) return false;
-    const params = {};
-    for (const kv of h.split('&')) {
-      const i = kv.indexOf('=');
-      if (i > 0) params[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
-    }
-    if (!params.a) return false;
-    $('dslA').value = params.a;
-    if (params.b) $('dslB').value = params.b;
-    if (params.w) $('word').value = params.w;
-    return true;
+    return window.Share.decode(location.hash).then(function (fields) {
+      if (!fields) return false;
+      $('dslA').value = fields.a;
+      $('dslB').value = fields.b || '';
+      $('word').value = fields.w || '';
+      syncExampleSelect('A');
+      syncExampleSelect('B');
+      return true;
+    }).catch(function () { return false; });
+  }
+
+  // Das Dropdown auf das Beispiel stellen, dessen DSL im Editor steht, sonst leeren.
+  function syncExampleSelect(slot) {
+    const src = $('dsl' + slot).value.trim();
+    let id = '';
+    for (const e of Ex.all) if (e.dsl.trim() === src) { id = e.id; break; }
+    $('ex' + slot).value = id;
   }
 
   // ---------- Theorieabhängige UI ----------
@@ -492,14 +521,27 @@
 
   // ---------- Start ----------
 
-  if (!loadFromHash()) {
-    $('dslA').value = Ex.byId('C3').dsl;
-    $('exA').value = 'C3';
-    $('dslB').value = Ex.byId('A3').dsl;
-    $('exB').value = 'A3';
-    $('word').value = '1, 1/2, 8/5';
+  // Ein von Hand geänderter oder aus der History zurückgeholter Hash lädt neu.
+  // Der eigene replaceState in mkLink setzt hier nichts in Gang, weil er kein
+  // hashchange auslöst.
+  window.addEventListener('hashchange', function () {
+    loadFromHash().then(function (ok) { if (ok) start(); });
+  });
+
+  loadFromHash().then(function (fromHash) {
+    if (!fromHash) {
+      $('dslA').value = Ex.byId('C3').dsl;
+      $('exA').value = 'C3';
+      $('dslB').value = Ex.byId('A3').dsl;
+      $('exB').value = 'A3';
+      $('word').value = '1, 1/2, 8/5';
+    }
+    start();
+  });
+
+  function start() {
+    refresh('A');
+    refresh('B');
+    runSimulation();
   }
-  refresh('A');
-  refresh('B');
-  runSimulation();
 })();

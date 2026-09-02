@@ -678,7 +678,7 @@
         const mu = th.witness(d);
         return {
           ok: false, checked: words.length,
-          witness: { word: w, text: formatWord(A, w), mu: mu ? mu.text : '?' }
+          witness: { word: w, text: formatWord(A, w), mu: mu && mu.text ? mu.text : null }
         };
       }
     }

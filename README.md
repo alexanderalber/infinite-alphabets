@@ -34,6 +34,7 @@ docs/assets/js/
   examples.js        Beispielkatalog aus beiden Papern
   positions-core.js  Positionen, Nachfolgermatrizen, BFS
   tikz.js            Export als tikz-Bild im Stil der Paper
+  share.js           kompakte Kodierung von Automaten und Wort fuer den URL-Hash
   draw.js            SVG-Rendering
   playground.js      UI des Playgrounds
   positions.js       UI der Positions-Seite
@@ -43,6 +44,12 @@ docs/assets/js/
 
 ```
 node test/run-all.js
+```
+
+Einzelne Seite als Screenshot ansehen (headless Chrome, ohne npm-Paket):
+
+```
+node test/shot.js playground.html
 ```
 
 Fuenf Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,

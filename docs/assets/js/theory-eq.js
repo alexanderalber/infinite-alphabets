@@ -121,7 +121,8 @@
   ClassTheory.prototype.witness = function (S) {
     if (S.length === 0) return null;
     const t = S[0];
-    return { text: this.formatTuple(t), value: t };
+    // Ohne Parameter gibt es nichts zu belegen: kein Zeugentext, aber ein gültiger Wert.
+    return { text: this.params.length ? this.formatTuple(t) : null, value: t };
   };
 
   ClassTheory.prototype.letterFor = function (ast, mu) {
@@ -280,7 +281,7 @@
 
   PartitionTheory.prototype.witness = function (S) {
     if (S.length === 0) return null;
-    return { text: this.formatPartition(S[0]), value: S[0] };
+    return { text: this.params.length ? this.formatPartition(S[0]) : null, value: S[0] };
   };
 
   // Übersetzung Partition → Klasse relativ zu einem Alphabet L (Plan 4.2): ein Block mit
