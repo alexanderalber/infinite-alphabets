@@ -59,7 +59,9 @@
       <div class="panel" data-info="info.pos.tokens">
         <h2 data-i18n="pos.tokens.h">Tokens</h2>
         <div class="graph-wrap"><svg class="graph" id="graph"></svg></div>
-        <div class="word-display" id="wordDisplay"></div>
+        <!-- Label davor, sonst steht das eps des leeren Wortes ohne Erklaerung
+             als einzelnes Zeichen unter dem Graphen. -->
+        <div class="word-display"><span class="seg-label" data-i18n="pos.word.label">Word:</span><span id="wordDisplay"></span></div>
         <div class="btn-row" id="letterButtons"></div>
         <div class="btn-row">
           <button data-icon="undo" id="undo" data-i18n="pos.undo">Undo</button>
