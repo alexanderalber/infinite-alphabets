@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en" data-theme="dark" data-skin="dark">
 <head>
 <meta charset="utf-8">
+<!-- FOUC-kritisch, deshalb inline: Skin aufloesen (?theme= -> localStorage ->
+     Standard) und data-skin plus die Polaritaet in data-theme setzen, bevor
+     irgendetwas gezeichnet wird. -->
+<script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
+<script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>infinite alphabets — Automaten über unendlichen Alphabeten</title>
+<title data-i18n="idx.title">infinite alphabets — automata over infinite alphabets</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -12,81 +17,51 @@
 <header class="site">
   <span class="brand">infinite alphabets</span>
   <nav>
-    <a href="index.html" class="active">Start</a>
-    <a href="playground.html">PA-Playground</a>
-    <a href="positions.html">Positionen</a>
-    <a href="semantics.html">Semantik</a>
+    <a href="index.html" class="active" data-i18n="nav.start">Start</a>
+    <a href="playground.html" data-i18n="nav.playground">PA playground</a>
+    <a href="positions.html" data-i18n="nav.positions">Positions</a>
+    <a href="semantics.html" data-i18n="nav.semantics">Semantics</a>
   </nav>
+  <div class="chrome">
+    <div class="group">
+      <button class="seg lang-seg" data-lang="de">DE</button><button class="seg lang-seg" data-lang="en">EN</button>
+    </div>
+    <div class="group">
+      <button class="seg theme-seg" data-theme-set="light" data-i18n-attr="aria-label:theme.light;title:theme.light"></button><button class="seg theme-seg" data-theme-set="grey" data-i18n-attr="aria-label:theme.grey;title:theme.grey"></button><button class="seg theme-seg" data-theme-set="dark" data-i18n-attr="aria-label:theme.dark;title:theme.dark"></button>
+    </div>
+  </div>
 </header>
 
 <main class="prose">
-  <h1>Parametrisierte Automaten und Variablenautomaten</h1>
+  <h1 data-i18n="idx.h1">Parametrized automata and variable automata</h1>
 
-  <p>
-    Zwei Werkzeuge zu den Papern von Franziska Alber und Philipp Rümmer über Automaten
-    auf unendlichen Alphabeten. Die Beispiele aus beiden Arbeiten sind hinterlegt und
-    nachrechenbar; eigene Automaten lassen sich in einer kleinen Textsprache eingeben.
-  </p>
+  <p data-i18n="idx.lead"></p>
 
-  <h2>Complementable Normal Form of Parametrized Automata (CIAA)</h2>
-  <p>
-    Ein parametrisierter Automat liest Buchstaben aus einer unendlichen Struktur, und seine
-    Transitionen sind Formeln über dem gelesenen Buchstaben <code>x</code> und einer Handvoll
-    global fixierter Parameter <code>y</code>. Akzeptiert wird ein Wort, wenn es <em>irgendeine</em>
-    Parameterbelegung gibt, unter der ein akzeptierender Lauf existiert. Diese existenzielle
-    Quantifizierung macht die Klasse unter Komplement nicht abgeschlossen. Das Paper gibt eine
-    Normalform an, die complementable normal form: ein Automat trägt zusätzlich eine Menge
-    komplement-akzeptierender Zustände, und Komplementieren wird zum Vertauschen zweier Mengen.
-    Der Playground rechnet Mitgliedschaft und Parametermengen exakt, baut das synchronisierte
-    Produkt aus dem Konstruktionssatz und prüft die CFPA-Bedingung auf Wortmengen nach.
-  </p>
-  <p><a href="playground.html">→ PA-Playground</a></p>
+  <h2 data-i18n="idx.ciaa.h">Complementable Normal Form of Parametrized Automata (CIAA)</h2>
+  <p data-i18n-html="idx.ciaa.p"></p>
+  <p><a href="playground.html" data-i18n="idx.ciaa.link">→ PA playground</a></p>
 
-  <h2>Universality of 1-Variable Automata is Decidable (ATVA)</h2>
-  <p>
-    Ein Variablenautomat vergleicht den gelesenen Buchstaben nur auf Gleichheit mit gebundenen
-    Variablen. Bei genau einer Variablen gibt es für jede Belegung genau einen Lauf, und die
-    Wirkung eines Wortes lässt sich zu einem Vektor zusammenfassen: pro Zustand die Anzahl der
-    Buchstaben, deren Lauf dort endet, plus ein Eintrag für die Belegungen, die im Wort nicht
-    vorkommen. Das Paper nennt diesen Vektor die Position des Wortes und zeigt, dass die
-    Nachfolgerpositionen durch feste Matrizen beschrieben werden. Universalität wird damit zu
-    einem Erreichbarkeitsproblem in einem Vektoradditionssystem, entscheidbar, aber
-    Ackermann-hart. Die Positions-Seite animiert die Tokens und erkundet die Positionen bis zu
-    einer wählbaren Tiefe.
-  </p>
-  <p><a href="positions.html">→ Positionen und Tokens</a></p>
+  <h2 data-i18n="idx.atva.h">Universality of 1-Variable Automata is Decidable (ATVA)</h2>
+  <p data-i18n-html="idx.atva.p"></p>
+  <p><a href="positions.html" data-i18n="idx.atva.link">→ Positions and tokens</a></p>
 
-  <h2>Was die Seite behauptet und was nicht</h2>
-  <p>
-    Alles, was pro Wort passiert, ist exakt gerechnet: Mitgliedschaft, Parametermengen, Läufe,
-    Leerheit, Determinismus, die Produktkonstruktionen. Über rationalen Zahlen wird mit exakten
-    Brüchen gearbeitet, nicht mit Gleitkomma.
-  </p>
-  <p>
-    Alles, was über <em>alle</em> Wörter quantifiziert, ist nur beschränkt prüfbar. Die Seite sagt
-    nie „universell“ oder „ist eine CFPA“, sondern immer „kein Gegenbeispiel bis Länge n gefunden“.
-    Universalität parametrisierter Automaten ist unentscheidbar; für 1-Variablen-Automaten ist sie
-    entscheidbar, aber die Prozedur ist hier nicht implementiert.
-  </p>
+  <h2 data-i18n="idx.claims.h">What this site claims and what it does not</h2>
+  <p data-i18n-html="idx.claims.p1"></p>
+  <p data-i18n-html="idx.claims.p2"></p>
 
-  <h2>Werkzeuge</h2>
+  <h2 data-i18n="idx.tools.h">Tools</h2>
   <ul>
-    <li><a href="playground.html">PA-Playground</a> — Automaten eingeben, Wörter simulieren, Produkte bilden, Eigenschaften prüfen.</li>
-    <li><a href="positions.html">Positionen</a> — Token-Animation für 1-Variablen-Automaten und Erkundung des Positionsraums.</li>
-    <li><a href="semantics.html">Semantik</a> — was genau gerechnet wird: Konfigurationsmengen, die beiden Theorien, die Entscheidungsverfahren.</li>
+    <li data-i18n-html="idx.tools.pg"></li>
+    <li data-i18n-html="idx.tools.pos"></li>
+    <li data-i18n-html="idx.tools.sem"></li>
   </ul>
 
-  <p class="hint">
-    Diese Seite ist eine eigenständige Implementierung in JavaScript. Sie benutzt die
-    Scala-Bibliothek der Autoren nicht und hält sich an die Definitionen der Paper.
-    Kein Build-Schritt, keine externen Ressourcen; die Seite läuft auch offline aus dem
-    Dateisystem.
-  </p>
+  <p class="hint" data-i18n="idx.note"></p>
 </main>
 
-<footer class="site">
-  Nach Arbeiten von Franziska Alber und Philipp Rümmer.
-</footer>
+<footer class="site" data-i18n="idx.footer">After work by Franziska Alber and Philipp Rümmer.</footer>
 
+<script src="assets/js/strings.js"></script>
+<script src="assets/js/site-chrome.js"></script>
 </body>
 </html>

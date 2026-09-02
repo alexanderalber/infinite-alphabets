@@ -1,5 +1,5 @@
 // positions.js — UI der Positions-Seite: Token-Animation und Erkundung.
-(function () {
+(function (root) {
   'use strict';
 
   const Au = window.Automaton;
@@ -7,6 +7,7 @@
   const P = window.Positions;
   const D = window.Draw;
   const Fo = window.Formula;
+  const T = function () { return window.I18n; };
 
   const $ = function (id) { return document.getElementById(id); };
 
@@ -19,10 +20,13 @@
   // ---------- Beispiele ----------
 
   const sel = $('ex');
-  for (const id of Ex.vaIds) {
-    const e = Ex.byId(id);
-    sel.appendChild(new Option(e.title + '  [' + e.source + ']', e.id));
+  function fillExamples() {
+    for (const id of Ex.vaIds) {
+      const e = Ex.byId(id);
+      sel.appendChild(new Option(Ex.title(e) + '  [' + e.source + ']', e.id));
+    }
   }
+  fillExamples();
   sel.addEventListener('change', function () {
     const e = Ex.byId(this.value);
     if (e) { $('dsl').value = e.dsl; reload(); }
@@ -39,17 +43,18 @@
     state.word = []; state.lastApplied = '';
     let A;
     try { A = Au.parseDSL($('dsl').value); }
-    catch (e) { errEl.textContent = (e.line ? 'Zeile ' + e.line + ': ' : '') + e.message; renderAll(); return; }
+    catch (e) { errEl.textContent = (e.line ? T().f('pg.line', e.line) : '') + e.message; renderAll(); return; }
     const info = P.analyze(A);
-    badgeEl.appendChild(badge(A.states.length + ' Zustände'));
+    badgeEl.appendChild(badge(T().f('pos.badge.states', A.states.length)));
     if (!info.ok) {
-      badgeEl.appendChild(badge('kein 1-VA', 'err'));
+      badgeEl.appendChild(badge(T().t('pos.badge.notVA'), 'err'));
       errEl.textContent = info.problems.join('\n');
       renderAll();
       return;
     }
-    badgeEl.appendChild(badge('gültiges 1-VA', 'ok'));
-    badgeEl.appendChild(badge('akzeptierend: ' + (A.accepting.map(Au.displayState).join(', ') || 'keine')));
+    badgeEl.appendChild(badge(T().t('pos.badge.isVA'), 'ok'));
+    badgeEl.appendChild(badge(T().f('pos.badge.accepting',
+      A.accepting.map(Au.displayState).join(', ') || T().t('pos.badge.none'))));
     state.A = A;
     state.info = info;
     state.mats = P.matrices(info);
@@ -112,15 +117,15 @@
       const s = tokenState(state.word, a);
       const b = document.createElement('button');
       b.textContent = a;
-      b.title = 'Token sitzt in ' + Au.displayState(state.info.states[s]) + ' — wendet π' + Fo.sub(s + 1) + ' an';
+      b.title = T().f('pos.btn.title', Au.displayState(state.info.states[s]), Fo.sub(s + 1));
       b.addEventListener('click', function () { append(a); });
       box.appendChild(b);
     }
     const nb = document.createElement('button');
     nb.className = 'primary';
     const fresh = P.nextFreshLetter(state.word);
-    nb.textContent = 'neuer Buchstabe (' + fresh + ')';
-    nb.title = 'wendet π₀ an';
+    nb.textContent = T().f('pos.btn.fresh', fresh);
+    nb.title = T().t('pos.btn.freshTitle');
     nb.addEventListener('click', function () { append(fresh); });
     box.appendChild(nb);
   }
@@ -164,12 +169,12 @@
     const upper = p.slice(0, n).join(', ');
     const lower = p.slice(n).join(', ');
     box.innerHTML = '(<span class="upper">' + upper + '</span> | <span class="lower">' + lower + '</span>)' +
-      '<div class="hint">links: runde Tokens pro Zustand · rechts: das eckige Token</div>' +
+      '<div class="hint">' + T().t('pos.vec.legend') + '</div>' +
       '<div class="hint">' + esc(P.formatPosition(state.info, p)) + '</div>';
     applied.textContent = state.lastApplied;
     const acc = P.isAccepting(state.info, p);
     verdict.innerHTML = '<div class="verdict ' + (acc ? 'acc' : 'none') + '">' +
-      (acc ? 'akzeptierende Position: ' : 'nicht akzeptierend: ') +
+      T().t(acc ? 'pos.verdict.acc' : 'pos.verdict.rej') +
       esc(Au.formatWord(state.A, state.word)) + (acc ? ' ∈ L(A)' : ' ∉ L(A)') + '</div>';
   }
 
@@ -184,8 +189,8 @@
     box.innerHTML = '';
     if (!state.mats) return;
     const info = state.info, m = state.mats;
-    box.appendChild(matTable('M (alle Tokens entlang z)', m.M));
-    box.appendChild(matTable('B (eckiges Token spaltet ab)', m.B));
+    box.appendChild(matTable(T().t('pos.mat.M'), m.M));
+    box.appendChild(matTable(T().t('pos.mat.B'), m.B));
     const v = document.createElement('div');
     v.className = 'mono';
     v.style.marginTop = '0.5rem';
@@ -232,22 +237,22 @@
     const out = $('exploreOut');
     const tbody = $('posTable').querySelector('tbody');
     out.innerHTML = ''; tbody.innerHTML = '';
-    if (!state.A) { out.innerHTML = '<div class="result-line">Kein gültiges 1-VA geladen.</div>'; return; }
+    if (!state.A) { out.innerHTML = '<div class="result-line">' + T().t('pos.explore.noVA') + '</div>'; return; }
     const d = parseInt($('depth').value, 10);
     const res = P.explore(state.A, { maxDepth: isNaN(d) ? 6 : d, maxNodes: 3000 });
     if (!res.ok) { out.innerHTML = '<div class="result-line">' + esc(res.problems.join('; ')) + '</div>'; return; }
 
-    const tag = '<span class="tag">bis Länge ' + res.maxDepth + ', ' + res.count + ' Positionen' +
-      (res.truncated ? ', abgebrochen' : '') + '</span> ';
+    const tag = '<span class="tag">' + T().f('pos.explore.tag', res.maxDepth, res.count) +
+      (res.truncated ? T().t('pos.explore.truncated') : '') + '</span> ';
     if (res.universalSoFar) {
       out.innerHTML = '<div class="result-line">' + tag +
-        'keine nicht-akzeptierende Position gefunden. <strong>Das ist kein Beweis</strong> für Universalität: ' +
-        'die Positionsmenge kann unendlich sein.</div>';
+        T().t('pos.explore.universal') + '</div>';
     } else {
       const w = res.witness;
       out.innerHTML = '<div class="result-line">' + tag +
-        '<strong>nicht universell.</strong> Zeuge (exakt): <span class="witness-link" id="wlink">' +
-        esc(w.word.length ? w.word.join('') : 'ε') + '</span> mit Position ' + esc(P.formatPosition(res.info, w.p)) + '</div>';
+        T().t('pos.explore.witness') + '<span class="witness-link" id="wlink">' +
+        esc(w.word.length ? w.word.join('') : 'ε') + '</span>' +
+        esc(T().f('pos.explore.withPos', P.formatPosition(res.info, w.p))) + '</div>';
       const lnk = $('wlink');
       if (lnk) lnk.addEventListener('click', function () {
         state.word = w.word.slice();
@@ -264,8 +269,8 @@
         '<td class="mono">' + esc(P.formatPosition(res.info, nd.p)) + '</td>' +
         '<td class="mono">' + esc(nd.word.length ? nd.word.join('') : 'ε') + '</td>' +
         '<td>' + (acc ? '✓' : '✗') + '</td>';
-      if (!acc) tr.style.background = '#fbeded';
-      tr.style.cursor = 'pointer';
+      tr.className = 'is-clickable';
+      if (!acc) tr.style.background = 'var(--tool-danger-bg)';
       tr.addEventListener('click', function () {
         state.word = nd.word.slice();
         state.lastApplied = '';
@@ -275,7 +280,7 @@
     }
     if (nodes.length > 300) {
       const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="4" class="hint">… ' + (nodes.length - 300) + ' weitere</td>';
+      tr.innerHTML = '<td colspan="4" class="hint">' + T().f('pos.explore.more', nodes.length - 300) + '</td>';
       tbody.appendChild(tr);
     }
   });
@@ -297,7 +302,20 @@
 
   // ---------- Start ----------
 
+  // Sprachwechsel: die Beispielnamen im Dropdown und alles dynamisch Erzeugte
+  // neu aufbauen. Die Erkundungsausgabe wird geleert statt uebersetzt, weil sie
+  // das Protokoll eines vergangenen Klicks ist.
+  root.__onLang = function () {
+    const cur = sel.value;
+    sel.innerHTML = '';
+    fillExamples();
+    sel.value = cur;
+    $('exploreOut').innerHTML = '';
+    $('posTable').querySelector('tbody').innerHTML = '';
+    reload();
+  };
+
   $('dsl').value = Ex.byId('V').dsl;
   sel.value = 'V';
   reload();
-})();
+})(globalThis);

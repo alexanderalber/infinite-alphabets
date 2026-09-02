@@ -12,6 +12,13 @@
 (function (root) {
   'use strict';
 
+  // Meldungstexte: root.Msg uebersetzt, fehlt es (Modul ohne messages.js),
+  // bleibt der deutsche Text aus dem Aufruf stehen.
+  function M(key, fallback) {
+    if (typeof root.Msg === 'function') return root.Msg.apply(null, arguments);
+    return fallback;
+  }
+
   const F = root.Fraction;
 
   // ---------- Linearformen ----------
@@ -23,7 +30,7 @@
   function linSym(name) { const t = lin(); t.sym = name; return t; }
 
   function linAdd(a, b) {
-    if (a.sym || b.sym) throw new Error('Konstante ' + (a.sym || b.sym) + ' kann nicht gerechnet werden');
+    if (a.sym || b.sym) throw new Error(M('msg.constNoArith', 'Konstante ' + (a.sym || b.sym) + ' kann nicht gerechnet werden', a.sym || b.sym));
     const t = lin();
     t.x = a.x.add(b.x);
     t.c = a.c.add(b.c);
@@ -33,7 +40,7 @@
     return t;
   }
   function linScale(a, k) {
-    if (a.sym) throw new Error('Konstante ' + a.sym + ' kann nicht skaliert werden');
+    if (a.sym) throw new Error(M('msg.constNoScale', 'Konstante ' + a.sym + ' kann nicht skaliert werden', a.sym));
     const t = lin();
     t.x = a.x.mul(k); t.c = a.c.mul(k);
     for (const key in a.ys) { const v = a.ys[key].mul(k); if (!v.isZero()) t.ys[key] = v; }
@@ -108,7 +115,7 @@
         else toks.push({ k: 'id', v: w, p: i });
         i = j; continue;
       }
-      throw new Error('Unerwartetes Zeichen "' + ch + '" an Position ' + i);
+      throw new Error(M('msg.badChar', 'Unerwartetes Zeichen "' + ch + '" an Position ' + i, ch, i));
     }
     toks.push({ k: 'eof', p: s.length });
     return toks;
@@ -127,7 +134,7 @@
     function peek() { return toks[pos]; }
     function next() { return toks[pos++]; }
     function expect(k) {
-      if (toks[pos].k !== k) throw new Error('Erwartet "' + k + '", gefunden "' + (toks[pos].v || toks[pos].k) + '"');
+      if (toks[pos].k !== k) throw new Error(M('msg.expected', 'Erwartet "' + k + '", gefunden "' + (toks[pos].v || toks[pos].k) + '"', k, toks[pos].v || toks[pos].k));
       return toks[pos++];
     }
 
@@ -174,7 +181,7 @@
       const terms = [parseTerm()];
       const rels = [];
       while (peek().k === 'rel') { rels.push(next().v); terms.push(parseTerm()); }
-      if (rels.length === 0) throw new Error('Relation erwartet (z.B. x < y)');
+      if (rels.length === 0) throw new Error(M('msg.relExpected', 'Relation erwartet (z.B. x < y)'));
       const atoms = [];
       for (let i = 0; i < rels.length; i++) atoms.push(mkAtom(rels[i], terms[i], terms[i + 1]));
       if (atoms.length === 1) return atoms[0];
@@ -183,10 +190,10 @@
 
     function mkAtom(rel, l, r) {
       if (ctx.theory === 'equality') {
-        if (rel !== '=' && rel !== '!=') throw new Error('In der Gleichheitstheorie sind nur = und ≠ erlaubt');
+        if (rel !== '=' && rel !== '!=') throw new Error(M('msg.eqOnlyRel', 'In der Gleichheitstheorie sind nur = und ≠ erlaubt'));
         const a = eqSide(l), b = eqSide(r);
-        if (a.kind === 'x' && b.kind === 'x') throw new Error('x = x ist sinnlos');
-        if (a.kind !== 'x' && b.kind !== 'x') throw new Error('Ein Atom muss x enthalten (Vergleiche ohne x sind in v1 nicht erlaubt)');
+        if (a.kind === 'x' && b.kind === 'x') throw new Error(M('msg.xEqX', 'x = x ist sinnlos'));
+        if (a.kind !== 'x' && b.kind !== 'x') throw new Error(M('msg.atomNeedsX', 'Ein Atom muss x enthalten (Vergleiche ohne x sind in v1 nicht erlaubt)'));
         const other = a.kind === 'x' ? b : a;
         return { t: 'atom', rel: rel, left: linX(), right: other.term, eqSide: other };
       }
@@ -196,12 +203,12 @@
     function eqSide(t) {
       if (t.sym) return { kind: 'const', name: t.sym, term: t };
       if (!t.x.isZero()) {
-        if (!t.x.eq(F.ONE) || !t.c.isZero() || Object.keys(t.ys).length) throw new Error('In der Gleichheitstheorie sind keine Rechnungen erlaubt');
+        if (!t.x.eq(F.ONE) || !t.c.isZero() || Object.keys(t.ys).length) throw new Error(M('msg.eqNoArith', 'In der Gleichheitstheorie sind keine Rechnungen erlaubt'));
         return { kind: 'x', term: t };
       }
       const ks = Object.keys(t.ys);
       if (ks.length === 1 && t.ys[ks[0]].eq(F.ONE) && t.c.isZero()) return { kind: 'param', idx: Number(ks[0]), term: t };
-      throw new Error('In der Gleichheitstheorie sind nur x, Parameter und Konstanten erlaubt');
+      throw new Error(M('msg.eqOnlyTerms', 'In der Gleichheitstheorie sind nur x, Parameter und Konstanten erlaubt'));
     }
 
     // term := sum
@@ -230,11 +237,11 @@
           const rhs = parseFactor();
           if (linIsConstNumber(acc)) acc = linScale(rhs, acc.c);
           else if (linIsConstNumber(rhs)) acc = linScale(acc, rhs.c);
-          else throw new Error('Nur lineare Terme: Produkt zweier Variablen');
+          else throw new Error(M('msg.nonlinear', 'Nur lineare Terme: Produkt zweier Variablen'));
         } else if (peek().k === '/') {
           next();
           const rhs = parseFactor();
-          if (!linIsConstNumber(rhs) || rhs.c.isZero()) throw new Error('Division nur durch eine Zahl ungleich 0');
+          if (!linIsConstNumber(rhs) || rhs.c.isZero()) throw new Error(M('msg.divZero', 'Division nur durch eine Zahl ungleich 0'));
           acc = linScale(acc, F.ONE.div(rhs.c));
         } else break;
       }
@@ -253,18 +260,18 @@
         const m = /^y(\d*)$/.exec(w);
         if (m) {
           const idx = m[1] === '' ? 1 : parseInt(m[1], 10);
-          if (idx < 1) throw new Error('Parameterindex muss ≥ 1 sein: ' + w);
+          if (idx < 1) throw new Error(M('msg.paramIndex', 'Parameterindex muss ≥ 1 sein: ' + w, w));
           seenParams.add(idx);
           return linY(idx);
         }
         if (ctx.theory === 'equality') { seenConsts.add(w); return linSym(w); }
-        throw new Error('Unbekannter Bezeichner "' + w + '" (in der reellen Theorie gibt es nur x, y_i und Zahlen)');
+        throw new Error(M('msg.unknownIdent', 'Unbekannter Bezeichner "' + w + '" (in der reellen Theorie gibt es nur x, y_i und Zahlen)', w));
       }
-      throw new Error('Term erwartet, gefunden "' + (tk.v || tk.k) + '"');
+      throw new Error(M('msg.termExpected', 'Term erwartet, gefunden "' + (tk.v || tk.k) + '"', tk.v || tk.k));
     }
 
     const f = parseFormula();
-    if (peek().k !== 'eof') throw new Error('Unerwartetes "' + (peek().v || peek().k) + '" nach der Formel');
+    if (peek().k !== 'eof') throw new Error(M('msg.trailing', 'Unerwartetes "' + (peek().v || peek().k) + '" nach der Formel', peek().v || peek().k));
     return { ast: f, params: Array.from(seenParams).sort(function (a, b) { return a - b; }), constants: Array.from(seenConsts).sort() };
   }
 

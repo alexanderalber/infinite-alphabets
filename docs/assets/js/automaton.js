@@ -3,6 +3,13 @@
 (function (root) {
   'use strict';
 
+  // Meldungstexte: root.Msg uebersetzt, fehlt es (Modul ohne messages.js),
+  // bleibt der deutsche Text aus dem Aufruf stehen.
+  function M(key, fallback) {
+    if (typeof root.Msg === 'function') return root.Msg.apply(null, arguments);
+    return fallback;
+  }
+
   const F = root.Fraction;
   const I = root.Intervals;
   const Fo = root.Formula;
@@ -71,21 +78,21 @@
       if (m) {
         const kw = m[1], rest = m[2].trim();
         if (kw === 'theory') {
-          if (rest !== 'reals' && rest !== 'equality') throw ParseError('theory muss "reals" oder "equality" sein', ln + 1);
+          if (rest !== 'reals' && rest !== 'equality') throw ParseError(M('msg.theory', 'theory muss "reals" oder "equality" sein'), ln + 1);
           A.theory = rest;
           continue;
         }
         if (kw === 'pos') {
           const parts = splitStateNames(rest);
-          if (parts.length !== 3) throw ParseError('pos braucht Zustand, x und y', ln + 1);
+          if (parts.length !== 3) throw ParseError(M('msg.pos', 'pos braucht Zustand, x und y'), ln + 1);
           A.pos[parts[0]] = { x: parseFloat(parts[1]), y: parseFloat(parts[2]) };
           continue;
         }
         const names = splitStateNames(rest);
-        for (const n of names) if (!validStateName(n)) throw ParseError('Ungültiger Zustandsname "' + n + '"', ln + 1);
+        for (const n of names) if (!validStateName(n)) throw ParseError(M('msg.badState', 'Ungültiger Zustandsname "' + n + '"', n), ln + 1);
         if (kw === 'states') { for (const n of names) if (!seenStates.has(n)) { seenStates.add(n); declaredStates.push(n); } }
         else if (kw === 'initial') {
-          if (names.length !== 1) throw ParseError('initial braucht genau einen Zustand', ln + 1);
+          if (names.length !== 1) throw ParseError(M('msg.initialOne', 'initial braucht genau einen Zustand'), ln + 1);
           A.initial = names[0];
         } else if (kw === 'accepting') A.accepting = A.accepting.concat(names);
         else if (kw === 'complement') A.complement = A.complement.concat(names);
@@ -93,14 +100,14 @@
       }
       // Transitionszeile: alles vor dem ersten ':' ist der Kopf.
       const ci = line.indexOf(':');
-      if (ci < 0) throw ParseError('Zeile verstanden weder als Schlüsselwort noch als Transition (":" fehlt)', ln + 1);
+      if (ci < 0) throw ParseError(M('msg.noColon', 'Zeile verstanden weder als Schlüsselwort noch als Transition (":" fehlt)'), ln + 1);
       const head = line.slice(0, ci).trim();
       const body = line.slice(ci + 1).trim();
       const hm = /^(.+?)\s*->\s*(.+)$/.exec(head);
-      if (!hm) throw ParseError('Transitionskopf muss "q -> q\'" sein', ln + 1);
+      if (!hm) throw ParseError(M('msg.transHead', 'Transitionskopf muss "q -> q\'" sein'), ln + 1);
       const from = hm[1].trim(), to = hm[2].trim();
-      if (!validStateName(from)) throw ParseError('Ungültiger Zustandsname "' + from + '"', ln + 1);
-      if (!validStateName(to)) throw ParseError('Ungültiger Zustandsname "' + to + '"', ln + 1);
+      if (!validStateName(from)) throw ParseError(M('msg.badState', 'Ungültiger Zustandsname "' + from + '"', from), ln + 1);
+      if (!validStateName(to)) throw ParseError(M('msg.badState', 'Ungültiger Zustandsname "' + to + '"', to), ln + 1);
       pending.push({ from: from, to: to, src: body, line: ln + 1 });
     }
 
@@ -111,7 +118,7 @@
     for (const t of pending) {
       let r;
       try { r = Fo.parse(t.src, ctx); }
-      catch (e) { throw ParseError('Formel: ' + e.message, t.line); }
+      catch (e) { throw ParseError(M('msg.formula', 'Formel: ' + e.message, e.message), t.line); }
       t.ast = r.ast;
       r.params.forEach(function (p) { paramSet.add(p); });
       r.constants.forEach(function (c) { constSet.add(c); });
@@ -126,17 +133,17 @@
       for (const s of [t.from, t.to]) if (A.states.indexOf(s) < 0) A.states.push(s);
     }
     if (!A.initial) {
-      if (!A.states.length) throw ParseError('Automat ohne Zustände', 1);
+      if (!A.states.length) throw ParseError(M('msg.noStates', 'Automat ohne Zustände'), 1);
       A.initial = A.states[0];
     }
     if (A.states.indexOf(A.initial) < 0) A.states.push(A.initial);
     for (const s of A.accepting.concat(A.complement)) {
-      if (A.states.indexOf(s) < 0) throw ParseError('Zustand "' + s + '" ist nicht deklariert', 1);
+      if (A.states.indexOf(s) < 0) throw ParseError(M('msg.undeclared', 'Zustand "' + s + '" ist nicht deklariert', s), 1);
     }
     const accSet = new Set(A.accepting);
-    for (const s of A.complement) if (accSet.has(s)) throw ParseError('Zustand "' + s + '" ist akzeptierend und komplement-akzeptierend', 1);
+    for (const s of A.complement) if (accSet.has(s)) throw ParseError(M('msg.accAndComp', 'Zustand "' + s + '" ist akzeptierend und komplement-akzeptierend', s), 1);
     if (A.theory === 'reals' && A.params.length > 1) {
-      throw ParseError('Die reelle Theorie ist in v1 auf einen Parameter beschränkt (gefunden: ' + A.params.length + ')', 1);
+      throw ParseError(M('msg.oneParam', 'Die reelle Theorie ist in v1 auf einen Parameter beschränkt (gefunden: ' + A.params.length + ')', A.params.length), 1);
     }
     return A;
   }
@@ -558,7 +565,7 @@
 
   // Größtes F_c (CIAA §3.1): q ∈ F_c ⇔ L(A) ∩ L(A[F := {q}]) = ∅.
   function largestFc(A) {
-    if (A.theory !== 'equality') throw new Error('Größtes F_c ist in v1 nur in der Gleichheitstheorie verfügbar (das direkte Produkt verdoppelt die reellen Parameter)');
+    if (A.theory !== 'equality') throw new Error(M('msg.fcEqOnly', 'Größtes F_c ist in v1 nur in der Gleichheitstheorie verfügbar (das direkte Produkt verdoppelt die reellen Parameter)'));
     const out = [];
     for (const q of A.states) {
       if (A.accepting.indexOf(q) >= 0) continue;
@@ -648,9 +655,15 @@
   // Sonst landen Buchstaben der einen Theorie in der Auswertung der anderen.
   function requireSameTheory(A, B) {
     if (A.theory === B.theory) return;
-    const name = { reals: 'reelle Zahlen', equality: 'Gleichheit' };
-    throw new Error('A und B benutzen verschiedene Theorien (' + name[A.theory] + ' gegen ' +
-      name[B.theory] + '). Sie lesen verschiedene Alphabete und sind nicht vergleichbar.');
+    const en = typeof root.I18n !== 'undefined' && root.I18n.lang() === 'en';
+    const name = en
+      ? { reals: 'the reals', equality: 'equality' }
+      : { reals: 'reelle Zahlen', equality: 'Gleichheit' };
+    throw new Error(en
+      ? 'A and B use different theories (' + name[A.theory] + ' against ' + name[B.theory] +
+        '). They read different alphabets and are not comparable.'
+      : 'A und B benutzen verschiedene Theorien (' + name[A.theory] + ' gegen ' +
+        name[B.theory] + '). Sie lesen verschiedene Alphabete und sind nicht vergleichbar.');
   }
 
   // Für den Vergleich zweier Automaten müssen die Konstanten beider im Alphabet

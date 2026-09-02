@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en" data-theme="dark" data-skin="dark">
 <head>
 <meta charset="utf-8">
+<script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
+<script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PA-Playground — infinite alphabets</title>
+<title data-i18n="pg.title">PA playground — infinite alphabets</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -12,11 +14,19 @@
 <header class="site">
   <span class="brand">infinite alphabets</span>
   <nav>
-    <a href="index.html">Start</a>
-    <a href="playground.html" class="active">PA-Playground</a>
-    <a href="positions.html">Positionen</a>
-    <a href="semantics.html">Semantik</a>
+    <a href="index.html" data-i18n="nav.start">Start</a>
+    <a href="playground.html" class="active" data-i18n="nav.playground">PA playground</a>
+    <a href="positions.html" data-i18n="nav.positions">Positions</a>
+    <a href="semantics.html" data-i18n="nav.semantics">Semantics</a>
   </nav>
+  <div class="chrome">
+    <div class="group">
+      <button class="seg lang-seg" data-lang="de">DE</button><button class="seg lang-seg" data-lang="en">EN</button>
+    </div>
+    <div class="group">
+      <button class="seg theme-seg" data-theme-set="light" data-i18n-attr="aria-label:theme.light;title:theme.light"></button><button class="seg theme-seg" data-theme-set="grey" data-i18n-attr="aria-label:theme.grey;title:theme.grey"></button><button class="seg theme-seg" data-theme-set="dark" data-i18n-attr="aria-label:theme.dark;title:theme.dark"></button>
+    </div>
+  </div>
 </header>
 
 <main>
@@ -25,10 +35,10 @@
     <!-- Spalte 1: Editoren -->
     <div>
       <div class="panel">
-        <h2>Slot A</h2>
+        <h2 data-i18n="pg.slotA">Slot A</h2>
         <div class="field-row">
           <select id="exA"></select>
-          <button id="showA">groß zeichnen</button>
+          <button id="showA" data-i18n="pg.drawBig">draw large</button>
         </div>
         <textarea id="dslA" spellcheck="false"></textarea>
         <div class="badges" id="badgesA"></div>
@@ -36,11 +46,11 @@
       </div>
 
       <div class="panel">
-        <h2>Slot B</h2>
+        <h2 data-i18n="pg.slotB">Slot B</h2>
         <div class="field-row">
           <select id="exB"></select>
-          <button id="showB">groß zeichnen</button>
-          <button id="clearB">leeren</button>
+          <button id="showB" data-i18n="pg.drawBig">draw large</button>
+          <button id="clearB" data-i18n="pg.clear">clear</button>
         </div>
         <textarea id="dslB" class="small" spellcheck="false"></textarea>
         <div class="badges" id="badgesB"></div>
@@ -48,36 +58,36 @@
       </div>
 
       <div class="panel">
-        <h2>Familien mit Parameter n</h2>
+        <h2 data-i18n="pg.fam.h">Families with parameter n</h2>
         <div class="field-row">
           <label>n = <input type="range" id="famN" min="1" max="5" value="2" style="width:8rem"></label>
           <span class="mono" id="famNLabel">2</span>
         </div>
         <div class="btn-row">
-          <button data-fam="epa">EPA-Familie A<sub>n</sub></button>
-          <button data-fam="cffsa">FSA als CFPA</button>
+          <button data-fam="epa" data-i18n-html="pg.fam.epa">EPA family A<sub>n</sub></button>
+          <button data-fam="cffsa" data-i18n="pg.fam.cffsa">FSA as CFPA</button>
         </div>
         <p class="hint" id="famNote"></p>
       </div>
 
       <div class="panel">
-        <h2>Operationen</h2>
-        <p class="hint" id="opTarget">Das Ergebnis landet in:
+        <h2 data-i18n="pg.ops.h">Operations</h2>
+        <p class="hint" id="opTarget"><span data-i18n="pg.ops.target">The result goes to:</span>
           <select id="opSlot"><option value="A">Slot A</option><option value="B" selected>Slot B</option></select>
         </p>
         <div class="btn-row">
-          <button data-op="sync">A ⊗ B synchronisiert (CFPA)</button>
-          <button data-op="inter">A ∩ B</button>
-          <button data-op="union">A ∪ B</button>
+          <button data-op="sync" data-i18n="pg.op.sync">A ⊗ B synchronized (CFPA)</button>
+          <button data-op="inter" data-i18n="pg.op.inter">A ∩ B</button>
+          <button data-op="union" data-i18n="pg.op.union">A ∪ B</button>
         </div>
         <div class="btn-row">
-          <button data-op="complement">Komplement (CFPA)</button>
-          <button data-op="sink">Vervollständigen (Sink)</button>
-          <button data-op="fc">größtes F_c</button>
+          <button data-op="complement" data-i18n="pg.op.complement">Complement (CFPA)</button>
+          <button data-op="sink" data-i18n="pg.op.sink">Complete (sink)</button>
+          <button data-op="fc" data-i18n="pg.op.fc">largest F_c</button>
         </div>
         <div class="btn-row">
-          <button data-op="simplify">Labels vereinfachen</button>
-          <button data-op="prune">unerreichbare entfernen</button>
+          <button data-op="simplify" data-i18n="pg.op.simplify">Simplify labels</button>
+          <button data-op="prune" data-i18n="pg.op.prune">Remove unreachable</button>
         </div>
         <p class="hint" id="opNote"></p>
       </div>
@@ -86,92 +96,91 @@
     <!-- Spalte 2: Graph -->
     <div>
       <div class="panel">
-        <h2>Graph <span id="graphWhich" class="mono"></span></h2>
+        <h2><span data-i18n="pg.graph.h">Graph</span> <span id="graphWhich" class="mono"></span></h2>
         <div class="graph-wrap"><svg class="graph" id="graph"></svg></div>
         <div class="legend">
-          <span><i class="acc"></i> akzeptierend</span>
-          <span><i class="comp"></i> komplement-akzeptierend</span>
-          <span><i class="weak"></i> schwach</span>
-          <span>Zustände sind ziehbar; die pos-Zeilen werden zurückgeschrieben.</span>
+          <span><i class="acc"></i> <span data-i18n="pg.legend.acc">accepting</span></span>
+          <span><i class="comp"></i> <span data-i18n="pg.legend.comp">complement-accepting</span></span>
+          <span><i class="weak"></i> <span data-i18n="pg.legend.weak">weak</span></span>
+          <span data-i18n="pg.legend.drag">States can be dragged; the pos lines are written back.</span>
         </div>
       </div>
 
       <div class="panel">
-        <h2>Wort</h2>
+        <h2 data-i18n="pg.word.h">Word</h2>
         <div class="field-row">
-          <input type="text" id="word" placeholder="1, 2, 3   bzw.   abacb">
+          <input type="text" id="word" data-i18n-attr="placeholder:pg.word.placeholder">
         </div>
         <div class="stepper">
-          <button id="stepFirst">⏮</button>
-          <button id="stepPrev">◀</button>
+          <button id="stepFirst" data-i18n-attr="title:pg.step.first;aria-label:pg.step.first">⏮</button>
+          <button id="stepPrev" data-i18n-attr="title:pg.step.prev;aria-label:pg.step.prev">◀</button>
           <input type="range" id="stepRange" min="0" max="0" value="0">
-          <button id="stepNext">▶</button>
-          <button id="stepAll">alle</button>
+          <button id="stepNext" data-i18n-attr="title:pg.step.next;aria-label:pg.step.next">▶</button>
+          <button id="stepAll" data-i18n="pg.step.all" data-i18n-attr="title:pg.step.allTitle">all</button>
           <span class="mono" id="stepLabel"></span>
         </div>
         <div id="verdict"></div>
         <table id="confTable">
-          <thead><tr><th>Schritt</th><th>Buchstabe</th><th>Konfigurationen</th></tr></thead>
+          <thead><tr>
+            <th data-i18n="pg.th.step">Step</th>
+            <th data-i18n="pg.th.letter">Letter</th>
+            <th data-i18n="pg.th.confs">Configurations</th>
+          </tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
 
-    <!-- Spalte 3: Prüfungen -->
+    <!-- Spalte 3: Pruefungen -->
     <div>
       <div class="panel">
-        <h2>Prüfungen</h2>
+        <h2 data-i18n="pg.checks.h">Checks</h2>
         <div class="field-row">
-          <label>Wortlänge ≤ <input type="text" id="maxLen" value="4" style="width:3.2rem"></label>
+          <label><span data-i18n="pg.checks.maxlen">Word length ≤</span> <input type="text" id="maxLen" value="4" style="width:3.2rem"></label>
         </div>
         <div class="field-row" id="gridRow">
-          <label>Gitter <input type="text" id="grid" value="0, 1/2, 1, 3/2, 2, 5/2, 3"></label>
+          <label><span data-i18n="pg.checks.grid">Grid</span> <input type="text" id="grid" value="0, 1/2, 1, 3/2, 2, 5/2, 3"></label>
         </div>
         <div class="btn-row">
-          <button data-check="empty">Leerheit A (exakt)</button>
-          <button data-check="det">Determinismus A (exakt)</button>
+          <button data-check="empty" data-i18n="pg.check.empty">Emptiness A (exact)</button>
+          <button data-check="det" data-i18n="pg.check.det">Determinism A (exact)</button>
         </div>
         <div class="btn-row">
-          <button data-check="cfpa">CFPA-Konsistenz A</button>
-          <button data-check="sdpa">SDPA-Check A</button>
-          <button data-check="uni">Universalität B</button>
+          <button data-check="cfpa" data-i18n="pg.check.cfpa">CFPA consistency A</button>
+          <button data-check="sdpa" data-i18n="pg.check.sdpa">SDPA check A</button>
+          <button data-check="uni" data-i18n="pg.check.uni">Universality B</button>
         </div>
         <div class="btn-row">
-          <button data-check="equiv">A ≡ B</button>
-          <button data-check="skolem">Skolem (A, B)</button>
+          <button data-check="equiv" data-i18n="pg.check.equiv">A ≡ B</button>
+          <button data-check="skolem" data-i18n="pg.check.skolem">Skolem (A, B)</button>
         </div>
         <div id="checkOut"></div>
       </div>
 
       <div class="panel">
-        <h2>Teilen</h2>
+        <h2 data-i18n="pg.share.h">Share</h2>
         <div class="btn-row">
-          <button id="mkLink">Link mit A, B und Wort erzeugen</button>
-          <button id="mkTikz">TikZ-Export des gezeigten Graphen</button>
+          <button id="mkLink" data-i18n="pg.share.link">Create link with A, B and word</button>
+          <button id="mkTikz" data-i18n="pg.share.tikz">TikZ export of the graph shown</button>
         </div>
         <p class="hint" id="linkOut"></p>
         <textarea id="tikzOut" class="small" spellcheck="false" style="display:none" readonly></textarea>
       </div>
 
       <div class="panel">
-        <h2>Was hier exakt ist</h2>
-        <p class="hint">
-          Mitgliedschaft, Parametermengen, Leerheit, Determinismus und die Produkte sind exakt
-          über den rationalen Zahlen gerechnet. Alles, was über <em>alle</em> Wörter quantifiziert
-          (Universalität, CFPA-Eigenschaft, Skolem-Bedingung, SDPA), wird nur bis zur eingestellten
-          Länge geprüft. Ein negatives Ergebnis ist dann ein echter Zeuge, ein positives nur
-          „kein Gegenbeispiel gefunden“. Universalität von PA ist unentscheidbar.
-        </p>
+        <h2 data-i18n="pg.exact.h">What is exact here</h2>
+        <p class="hint" data-i18n-html="pg.exact.p"></p>
       </div>
     </div>
 
   </div>
 </main>
 
-<footer class="site">
-  Semantik nach Alber und Rümmer, CIAA und ATVA. Eigenständige JS-Implementierung, keine Bibliothek der Autoren.
-</footer>
+<footer class="site" data-i18n="pg.footer">Semantics after Alber and Rümmer, CIAA and ATVA. Independent JS implementation, not the authors’ library.</footer>
 
+<script src="assets/js/strings.js"></script>
+<script src="assets/js/messages.js"></script>
+<script src="assets/js/site-chrome.js"></script>
 <script src="assets/js/fraction.js"></script>
 <script src="assets/js/intervals.js"></script>
 <script src="assets/js/formula.js"></script>

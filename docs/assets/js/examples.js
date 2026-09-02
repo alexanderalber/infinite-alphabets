@@ -305,8 +305,35 @@ pos q1 1 0
     return null;
   }
 
+  // Englische Titel. Nur der Titel wird angezeigt (im Dropdown), die note steht
+  // nirgends im UI, deshalb ist sie hier nicht doppelt gefuehrt. Die Formelnamen
+  // (A₁, C₃, ...) und die Quellenangaben bleiben in beiden Sprachen gleich.
+  const TITLE_EN = {
+    A1: 'A₁ — not complementable',
+    A2: 'A₂ — last letter is strictly the largest',
+    A2p: "A₂' — A₂ deterministic per assignment",
+    A3: 'A₃ — all letters within an interval of length 1',
+    A3p: "A₃' — A₃ deterministic per assignment",
+    C3: 'C₃ — CFPA for L(A₃)',
+    D: 'D — SDPA: first and last letter agree',
+    B: "B — Skolem automaton for A₂'",
+    A2pB: "A₂' ⊗ B — synchronized product",
+    CFFSA2: 'Finite automaton as a CFPA (n = 2)',
+    V: 'V — universal 1-VA',
+    VAdouble: 'Some letter occurs twice',
+    VAlastnew: 'Last letter does not occur before',
+    EPA2: 'A₂ (EPA family, n = 2)'
+  };
+
+  // Titel in der aktuellen Sprache. Faellt auf den deutschen Titel zurueck,
+  // solange die Stringtabelle noch nicht geladen ist (Node-Tests).
+  function title(e) {
+    const lang = root.I18n ? root.I18n.lang() : 'de';
+    return (lang === 'en' && TITLE_EN[e.id]) ? TITLE_EN[e.id] : e.title;
+  }
+
   root.Examples = {
-    all: EX, byId: byId,
+    all: EX, byId: byId, title: title,
     epaFamily: epaFamily, cffsa: cffsa,
     // Für die Positions-Seite relevante 1-VA.
     vaIds: ['V', 'VAdouble', 'VAlastnew']

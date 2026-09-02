@@ -23,8 +23,14 @@ direkt aus dem Dateisystem über `file://`.
 
 ## Module
 
+Die Seiten sind zweisprachig (Englisch ist Standard) und kennen drei Themes
+(hell, dunkel, grau) nach dem Designsystem von alber.me.
+
 ```
 docs/assets/js/
+  strings.js         alle sichtbaren Texte, Deutsch und Englisch
+  messages.js        Meldungen aus der Engine, Englisch (Deutsch steht im Aufruf)
+  site-chrome.js     Theme- und Sprachumschalter samt Umschaltanimationen
   fraction.js        exakte Brüche auf BigInt
   intervals.js       Intervallmengen über Q
   formula.js         Parser, Pretty-Printer, Linearformen
@@ -57,6 +63,11 @@ Produkte, Entscheidungsverfahren), Positionen (Matrizen aus ATVA, Simulation geg
 Matrixformel auf zufälligen 1-VA), Beispiele (jedes Beispiel gegen seine Sprache, plus
 TikZ-Export) und Seitentests, die die HTML-Seiten in headless Chrome laden und
 durchklicken; sie melden auch Konsolenfehler, die erst durch die Klicks entstehen. Ohne installiertes Chrome überspringt die letzte Suite sich selbst.
+
+Die Seitentests laden die Seiten mit `?lang=de`, weil ihre Erwartungen die deutschen
+Texte prüfen. Zusätzlich prüfen sie pro Seite die Chrome: Englisch als Standard, den
+Sprachwechsel, die drei Skins samt Polarität und Persistenz, und dass in der englischen
+Fassung keine deutschen Reste stehen.
 
 ## Was exakt ist
 

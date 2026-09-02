@@ -12,6 +12,12 @@
 (function (root) {
   'use strict';
 
+  // Meldungstexte: root.Msg uebersetzt, fehlt es, bleibt der deutsche Text.
+  function M(key, fallback) {
+    if (typeof root.Msg === 'function') return root.Msg.apply(null, arguments);
+    return fallback;
+  }
+
   const Fo = root.Formula;
   const FRESH = -1;
 
@@ -111,7 +117,8 @@
 
   ClassTheory.prototype.format = function (S) {
     if (S.length === 0) return '∅';
-    if (S.length === this.allTuples().length) return this.params.length === 1 ? 'y beliebig' : 'beliebig';
+    if (S.length === this.allTuples().length) return this.params.length === 1
+      ? M('msg.yAny', 'y beliebig') : M('msg.any', 'beliebig');
     const xs = S.map(this.formatTuple, this);
     xs.sort();
     if (xs.length > 6) return xs.slice(0, 6).join('; ') + ' … (' + xs.length + ' Klassen)';
@@ -272,7 +279,7 @@
 
   PartitionTheory.prototype.format = function (S) {
     if (S.length === 0) return '∅';
-    if (S.length === this.allPartitions().length) return 'beliebig';
+    if (S.length === this.allPartitions().length) return M('msg.any', 'beliebig');
     const xs = S.map(this.formatPartition, this);
     xs.sort();
     if (xs.length > 5) return xs.slice(0, 5).join('; ') + ' … (' + xs.length + ')';

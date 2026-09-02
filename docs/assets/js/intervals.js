@@ -5,6 +5,12 @@
 (function (root) {
   'use strict';
 
+  // Meldungstexte: root.Msg uebersetzt, fehlt es, bleibt der deutsche Text.
+  function M(key, fallback) {
+    if (typeof root.Msg === 'function') return root.Msg.apply(null, arguments);
+    return fallback;
+  }
+
   const F = root.Fraction;
   const NEG_INF = null;
   const POS_INF = null;
@@ -206,7 +212,7 @@
   function format(s, v) {
     v = v || 'y';
     if (isEmpty(s)) return '∅';
-    if (isFull(s)) return v + ' beliebig';
+    if (isFull(s)) return v + ' ' + M('msg.anyWord', 'beliebig');
     const c = complement(s);
     if (c.length > 0 && c.every(function (i) { return i.lo !== null && i.hi !== null && i.lo.eq(i.hi); })) {
       const pts = c.map(function (i) { return formatEndpoint(i.lo); });
@@ -218,7 +224,7 @@
 
   function formatInterval(i, v) {
     if (i.lo !== null && i.hi !== null && i.lo.eq(i.hi)) return v + ' = ' + formatEndpoint(i.lo);
-    if (i.lo === null && i.hi === null) return v + ' beliebig';
+    if (i.lo === null && i.hi === null) return v + ' ' + M('msg.anyWord', 'beliebig');
     if (i.lo === null) return v + (i.hiClosed ? ' ≤ ' : ' < ') + formatEndpoint(i.hi);
     if (i.hi === null) return v + (i.loClosed ? ' ≥ ' : ' > ') + formatEndpoint(i.lo);
     return formatEndpoint(i.lo) + (i.loClosed ? ' ≤ ' : ' < ') + v + (i.hiClosed ? ' ≤ ' : ' < ') + formatEndpoint(i.hi);

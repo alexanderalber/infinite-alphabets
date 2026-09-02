@@ -178,7 +178,9 @@ async function main() {
     await send('Runtime.enable', {}, sid);
     await send('Log.enable', {}, sid);
     await send('Page.enable', {}, sid);
-    await send('Page.navigate', { url: base + page }, sid);
+    // Die Erwartungen unten pruefen die deutschen Texte, also wird die Sprache
+    // explizit gesetzt. Ohne den Parameter waere die Seite englisch (Standard).
+    await send('Page.navigate', { url: base + page + '?lang=de' }, sid);
     await wait(1400);
 
     async function evaluate(expr) {
@@ -287,7 +289,7 @@ async function main() {
       check('playground: Hash gesetzt', share.hash.indexOf('#z=') === 0, share.hash.slice(0, 40));
 
       // Reload mit dem Hash: dieselben Automaten und dasselbe Wort kommen zurueck.
-      await send('Page.navigate', { url: base + page + share.hash }, sid);
+      await send('Page.navigate', { url: base + page + '?lang=de' + share.hash }, sid);
       await wait(1200);
       const back = await evaluate(`(function(){
         return { a: document.getElementById('dslA').value,
@@ -369,7 +371,7 @@ async function main() {
       check('playground: altes Format zeichnet', legacy.states === 2, String(legacy.states));
 
       // Zurueck zum Ausgangszustand fuer die folgenden Pruefungen.
-      await send('Page.navigate', { url: base + page }, sid);
+      await send('Page.navigate', { url: base + page + '?lang=de' }, sid);
       await wait(1200);
 
       // Pruefung durchklicken
@@ -459,6 +461,113 @@ async function main() {
       }
       check(page + ': alle internen Links existieren', bad.length === 0, bad.join(', '));
     }
+
+    // ---------- Chrome: Sprache und Themes ----------
+    // Jede Seite traegt beide Umschalter, also wird beides auf jeder Seite geprueft.
+
+    // Englisch ist der Standard: ohne ?lang= und ohne gemerkte Wahl muss die
+    // Seite englisch kommen. Der Speicher wird geleert, weil die Navigation
+    // oben mit ?lang=de gelaufen ist und die Wahl bewusst gemerkt wird.
+    await evaluate('localStorage.removeItem("lang"); localStorage.removeItem("theme")');
+    await send('Page.navigate', { url: base + page }, sid);
+    await wait(900);
+    const enDefault = await evaluate(`(function(){
+      return {
+        lang: document.documentElement.lang,
+        nav: document.querySelector('header.site nav a').textContent,
+        active: (document.querySelector('.lang-seg.active') || {}).textContent || '',
+        untranslated: Array.from(document.querySelectorAll('[data-i18n], [data-i18n-html]'))
+          .filter(function(e){ return !e.textContent.trim(); }).length,
+        keyLeak: /\b(idx|pg|pos|sem|nav)\.[a-z]/i.test(document.body.textContent)
+      };
+    })()`);
+    check(page + ': Englisch ist Standard', enDefault.lang === 'en', enDefault.lang);
+    check(page + ': EN-Segment aktiv', enDefault.active === 'EN', enDefault.active);
+    check(page + ': kein leeres i18n-Element', enDefault.untranslated === 0, String(enDefault.untranslated));
+    // Ein fehlender Schluessel wuerde als "pg.foo" im Text stehen statt als Satz.
+    check(page + ': kein Schluessel im Text sichtbar', !enDefault.keyLeak, 'Schluessel sichtbar');
+
+    // Deutsche Reste in der englischen Fassung. Der Fall ist real aufgetreten:
+    // 'y beliebig' kam aus den Theoriemodulen und stand mitten im Graphen.
+    // Geprueft werden Woerter, die im Englischen nicht vorkommen; Eigennamen
+    // (Ruemmer) und die Fachbegriffe der Paper sind ausgenommen.
+    const german = await evaluate(`(function(){
+      const txt = document.body.innerText;
+      const bad = [];
+      const words = ['beliebig', 'Zustand', 'Buchstabe', 'akzeptiert', 'gefunden',
+        'Laenge', 'Fehler', 'unvollst', 'Schritt', 'Zeuge', 'Wörter'];
+      words.forEach(function(w){ if (txt.indexOf(w) >= 0) bad.push(w); });
+      if (/[äöüß]/.test(txt.replace(/Rümmer/g, ''))) bad.push('Umlaut');
+      return bad;
+    })()`);
+    check(page + ': keine deutschen Reste in der englischen Fassung',
+      german.length === 0, german.join(', '));
+
+    // Umschalten auf Deutsch: der Text aendert sich, lang und Segment ziehen mit.
+    const toDe = await evaluate(`(function(){
+      const before = document.querySelector('header.site nav a').textContent;
+      document.querySelector('.lang-seg[data-lang="de"]').click();
+      return new Promise(function(res){ setTimeout(function(){
+        res({
+          before: before,
+          lang: document.documentElement.lang,
+          active: (document.querySelector('.lang-seg.active') || {}).textContent || '',
+          stored: localStorage.getItem('lang'),
+          url: location.search
+        });
+      }, 600); });
+    })()`);
+    check(page + ': Wechsel auf DE setzt lang', toDe.lang === 'de', toDe.lang);
+    check(page + ': DE-Segment aktiv', toDe.active === 'DE', toDe.active);
+    check(page + ': Sprache gemerkt', toDe.stored === 'de', String(toDe.stored));
+    check(page + ': Sprache in der URL', /lang=de/.test(toDe.url), toDe.url);
+
+    // Die drei Skins. Grau ist ein dunkler Skin, data-theme muss dark bleiben.
+    const themes = await evaluate(`(function(){
+      const out = [];
+      const seq = ['light', 'grey', 'dark'];
+      let i = 0;
+      function step(res){
+        if (i >= seq.length) { res(out); return; }
+        const v = seq[i++];
+        document.querySelector('.theme-seg[data-theme-set="' + v + '"]').click();
+        setTimeout(function(){
+          const cs = getComputedStyle(document.documentElement);
+          out.push({
+            want: v,
+            skin: document.documentElement.dataset.skin,
+            theme: document.documentElement.dataset.theme,
+            stored: localStorage.getItem('theme'),
+            emph: cs.getPropertyValue('--tool-emph').trim(),
+            border: cs.getPropertyValue('--tool-border').trim(),
+            active: (document.querySelector('.theme-seg.active') || {}).getAttribute('data-theme-set')
+          });
+          step(res);
+        }, 500);
+      }
+      return new Promise(step);
+    })()`);
+    const byName = {};
+    themes.forEach(function (t) { byName[t.want] = t; });
+    check(page + ': drei Skins geschaltet', themes.length === 3, String(themes.length));
+    themes.forEach(function (t) {
+      check(page + ': Skin ' + t.want + ' gesetzt', t.skin === t.want, t.skin);
+      check(page + ': Skin ' + t.want + ' aktiv markiert', t.active === t.want, String(t.active));
+      check(page + ': Skin ' + t.want + ' gemerkt', t.stored === t.want, String(t.stored));
+    });
+    // Die Polaritaet: hell ist hell, grau und dunkel sind dunkel.
+    check(page + ': hell hat Polaritaet light', byName.light && byName.light.theme === 'light',
+      byName.light && byName.light.theme);
+    check(page + ': grau ist ein dunkler Skin', byName.grey && byName.grey.theme === 'dark',
+      byName.grey && byName.grey.theme);
+    // Jeder Skin muss eine eigene Leiter setzen, sonst greift der Block nicht.
+    check(page + ': hell und dunkel haben verschiedene Textfarben',
+      byName.light && byName.dark && byName.light.emph !== byName.dark.emph,
+      byName.light && byName.light.emph);
+    // Im grauen Skin traegt der Rahmen die Struktur, er ist weiss.
+    check(page + ': grauer Skin hat weissen Rahmen',
+      byName.grey && /^#f{3,6}$|^rgb\(255, 255, 255\)$/i.test(byName.grey.border),
+      byName.grey && byName.grey.border);
 
     // Fehler, die erst durch die Klicks oben ausgeloest wurden.
     check(page + ': keine Konsolenfehler bei der Bedienung',

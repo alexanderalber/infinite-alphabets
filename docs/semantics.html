@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en" data-theme="dark" data-skin="dark">
 <head>
 <meta charset="utf-8">
+<script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
+<script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Semantik — infinite alphabets</title>
+<title data-i18n="sem.title">Semantics — infinite alphabets</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -12,135 +14,78 @@
 <header class="site">
   <span class="brand">infinite alphabets</span>
   <nav>
-    <a href="index.html">Start</a>
-    <a href="playground.html">PA-Playground</a>
-    <a href="positions.html">Positionen</a>
-    <a href="semantics.html" class="active">Semantik</a>
+    <a href="index.html" data-i18n="nav.start">Start</a>
+    <a href="playground.html" data-i18n="nav.playground">PA playground</a>
+    <a href="positions.html" data-i18n="nav.positions">Positions</a>
+    <a href="semantics.html" class="active" data-i18n="nav.semantics">Semantics</a>
   </nav>
+  <div class="chrome">
+    <div class="group">
+      <button class="seg lang-seg" data-lang="de">DE</button><button class="seg lang-seg" data-lang="en">EN</button>
+    </div>
+    <div class="group">
+      <button class="seg theme-seg" data-theme-set="light" data-i18n-attr="aria-label:theme.light;title:theme.light"></button><button class="seg theme-seg" data-theme-set="grey" data-i18n-attr="aria-label:theme.grey;title:theme.grey"></button><button class="seg theme-seg" data-theme-set="dark" data-i18n-attr="aria-label:theme.dark;title:theme.dark"></button>
+    </div>
+  </div>
 </header>
 
 <main class="prose">
-  <h1>Was genau gerechnet wird</h1>
-  <p>
-    Diese Seite beschreibt die Semantik, die der Playground implementiert, damit nachvollziehbar
-    ist, was hinter einem Ergebnis steht. Die Definitionen folgen den Papern, nicht den
-    Konventionen einer Bibliothek.
-  </p>
+  <h1 data-i18n="sem.h1">What exactly is computed</h1>
+  <p data-i18n="sem.lead"></p>
 
-  <h2>Die Sprache</h2>
-  <p>Ein Automat wird zeilenweise beschrieben. <code>#</code> beginnt einen Kommentar.</p>
-<pre><code>theory reals                  # oder: theory equality
+  <h2 data-i18n="sem.lang.h">The language</h2>
+  <p data-i18n-html="sem.lang.p"></p>
+<pre><code><span data-i18n="sem.lang.c1">theory reals                  # or: theory equality</span>
 states q0 q1 q2
 initial q0
 accepting q1
-complement q2                 # optional: komplement-akzeptierende Zustände (CFPA)
+<span data-i18n="sem.lang.c2">complement q2                 # optional: complement-accepting states (CFPA)</span>
 q0 -&gt; q0 : x &lt; y
 q0 -&gt; q1 : x = y
 q0 -&gt; q2 : x &gt; y
 q1 -&gt; q2 : true
 q2 -&gt; q2 : true
-pos q0 0 0                    # optional: Layout in Rastereinheiten
+<span data-i18n="sem.lang.c3">pos q0 0 0                    # optional: layout in grid units</span>
 </code></pre>
-  <p>
-    Zustandsnamen sind Bezeichner oder geklammerte Tupel wie <code>(q0,r1)</code>. Genau ein
-    Zustand ist initial; <code>accepting</code> und <code>complement</code> sind disjunkt.
-    Zustände ohne Rolle sind schwach, wenn eine <code>complement</code>-Zeile existiert.
-    Der gelesene Buchstabe heißt <code>x</code>, Parameter heißen <code>y</code> oder
-    <code>y1</code>, <code>y2</code>, …
-  </p>
-  <p>
-    In Formeln sind <code>and or not true false</code> und ihre Unicode-Formen erlaubt,
-    Vergleichsketten wie <code>y &lt;= x &lt;= y+1</code> stehen für die Konjunktion.
-    Über den reellen Zahlen sind Terme linear in <code>x</code> und <code>y</code> mit rationalen
-    Koeffizienten; in der Gleichheitstheorie sind nur <code>=</code> und <code>≠</code> gegen
-    Parameter oder Konstanten erlaubt.
-  </p>
+  <p data-i18n-html="sem.lang.p2"></p>
+  <p data-i18n-html="sem.lang.p3"></p>
 
-  <h2>Konfigurationsmengen</h2>
-  <p>
-    Sei Θ die Menge aller Parameterbelegungen. Eine Konfiguration ist ein Paar (q, S) mit
-    S ⊆ Θ, gelesen als: es gibt einen Lauf des bisher gelesenen Präfixes, der in q endet, genau
-    für die Belegungen in S. Gestartet wird mit (q₀, Θ). Beim Lesen von w<sub>i</sub> wird für
-    jede Transition (q, φ, q′) die Menge S auf {μ | φ(w<sub>i</sub>, μ)} eingeschränkt; nichtleere
-    Ergebnisse werden pro Zielzustand vereinigt. Das ist korrekt, weil Akzeptanz existenziell
-    über μ und über Läufe quantifiziert.
-  </p>
-  <p>
-    Akzeptiert wird, wenn die Vereinigung über die akzeptierenden Zustände nichtleer ist;
-    komplement-akzeptiert analog über <code>complement</code>. Für den SDPA-Check wird dieselbe
-    Rechnung ohne das Vereinigen ausgeführt, weil dort Läufe und nicht Zustände gezählt werden.
-  </p>
+  <h2 data-i18n="sem.conf.h">Configuration sets</h2>
+  <p data-i18n-html="sem.conf.p1"></p>
+  <p data-i18n-html="sem.conf.p2"></p>
 
-  <h2>Die Gleichheitstheorie</h2>
-  <p>
-    Atome sind <code>x = t</code> und <code>x ≠ t</code>; Parameter werden nie miteinander
-    verglichen. Für ein Wort w mit Buchstabenmenge L<sub>w</sub> und Konstantenmenge C sei
-    L = L<sub>w</sub> ∪ C. Zwei Belegungen verhalten sich auf w identisch, wenn jeder Parameter
-    entweder denselben Wert in L hat oder in beiden Belegungen außerhalb von L liegt. Θ zerfällt
-    also in (|L|+1)<sup>k</sup> Klassen, und die Simulation rechnet auf diesen Klassen exakt.
-  </p>
-  <p>
-    Für die Projektion ∃x. φ und für die Leerheitssuche genügen diese Klassen nicht: dort gibt es
-    kein Wort, relativ zu dem „frisch“ definiert wäre, und ob zwei Parameter gleich sind,
-    beeinflusst das Ergebnis. Dafür wird eine zweite Darstellung benutzt: Partitionen von
-    {y₁…y<sub>k</sub>} ∪ C, in denen Konstanten paarweise in verschiedenen Blöcken liegen.
-  </p>
+  <h2 data-i18n="sem.eq.h">The equality theory</h2>
+  <p data-i18n-html="sem.eq.p1"></p>
+  <p data-i18n-html="sem.eq.p2"></p>
 
-  <h2>Die reelle Theorie</h2>
-  <p>
-    Ein Parameter, lineare Atome. Parametermengen sind endliche Vereinigungen von Intervallen mit
-    rationalen Endpunkten, exakt als Brüche gerechnet. Für die Einschränkung wird x durch den
-    Buchstaben ersetzt; jedes Atom wird zu einer Halbgeraden, einem Punkt oder deren Komplement.
-  </p>
-  <p>
-    Die Projektion {y | ∃x. φ(x,y)} nutzt, dass die Struktur der Menge {x | φ(x,y)} sich nur an
-    endlich vielen kritischen y-Werten ändert: an den Schnittpunkten der Randgeraden und an den
-    Nullstellen der Atome ohne x. Zwischen zwei solchen Werten ist die Ordnung aller Randpunkte
-    konstant. Pro Zelle genügt daher ein Stichprobenwert. Das ist eine eindimensionale
-    zylindrische Zerlegung und damit exakt, nicht heuristisch.
-  </p>
+  <h2 data-i18n="sem.real.h">The real theory</h2>
+  <p data-i18n-html="sem.real.p1"></p>
+  <p data-i18n-html="sem.real.p2"></p>
 
-  <h2>Was exakt entschieden wird</h2>
+  <h2 data-i18n="sem.exact.h">What is decided exactly</h2>
   <ul>
-    <li><strong>Mitgliedschaft</strong> und die Parametermenge pro Zustand, für jedes eingegebene Wort.</li>
-    <li><strong>Leerheit</strong> von L(A): Erreichbarkeit im endlichen Graphen der Paare (q, S), wobei S der
-      Schnitt der Projektionen der benutzten Transitionsformeln ist. Für einen festen Pfad sind die
-      Buchstaben unabhängig, nur μ ist geteilt; der Pfad ist genau dann durchlaufbar, wenn dieser Schnitt
-      nichtleer ist. Ein Zeuge wird konstruiert.</li>
-    <li><strong>Determinismus per Belegung</strong>: paarweise Disjunktheit der ausgehenden Formeln und
-      Vollständigkeit, beides über ∃x∃y entschieden.</li>
-    <li><strong>Produkte</strong>, Komplement einer CFPA, Vervollständigung und die Vereinfachung der
-      Labels.</li>
-    <li><strong>Größtes F<sub>c</sub></strong> in der Gleichheitstheorie, über Leerheit des direkten
-      Produkts A × A[F := {q}].</li>
+    <li data-i18n-html="sem.exact.li1"></li>
+    <li data-i18n-html="sem.exact.li2"></li>
+    <li data-i18n-html="sem.exact.li3"></li>
+    <li data-i18n-html="sem.exact.li4"></li>
+    <li data-i18n-html="sem.exact.li5"></li>
   </ul>
 
-  <h2>Was nur beschränkt geprüft wird</h2>
-  <p>
-    Universalität, die CFPA-Konsistenz, die Skolem-Bedingung, Äquivalenz und die SDPA-Eigenschaft
-    quantifizieren über alle Wörter. Der Playground zählt Wörter bis zu einer Länge auf und meldet
-    ehrlich, was er geprüft hat. Ein gefundenes Gegenbeispiel ist exakt und endgültig; das Ausbleiben
-    eines Gegenbeispiels ist kein Beweis.
-  </p>
-  <p>
-    In der Gleichheitstheorie ist die Aufzählung bis zur Längenschranke vollständig, weil die Sprachen
-    unter Bijektionen invariant sind, die die Konstanten fixieren: es genügen die kanonischen Wörter.
-    Über den reellen Zahlen ist die Gitteraufzählung eine Heuristik, und sie ist als solche beschriftet.
-  </p>
+  <h2 data-i18n="sem.bounded.h">What is only checked up to a bound</h2>
+  <p data-i18n-html="sem.bounded.p1"></p>
+  <p data-i18n-html="sem.bounded.p2"></p>
 
-  <h2>Grenzen dieser Fassung</h2>
+  <h2 data-i18n="sem.limits.h">Limits of this version</h2>
   <ul>
-    <li>Über den reellen Zahlen ist genau ein Parameter erlaubt. Mehrere bräuchten Polyeder statt
-      Intervalle und Projektion per Fourier-Motzkin.</li>
-    <li>Keine ε-Transitionen.</li>
-    <li>Die Entscheidungsprozedur für Universalität von 1-VA (Vektoradditionssysteme) ist nicht
-      implementiert.</li>
+    <li data-i18n-html="sem.limits.li1"></li>
+    <li data-i18n-html="sem.limits.li2"></li>
+    <li data-i18n-html="sem.limits.li3"></li>
   </ul>
 </main>
 
-<footer class="site">
-  Semantik nach Alber und Rümmer, CIAA und ATVA.
-</footer>
+<footer class="site" data-i18n="sem.footer">Semantics after Alber and Rümmer, CIAA and ATVA.</footer>
 
+<script src="assets/js/strings.js"></script>
+<script src="assets/js/site-chrome.js"></script>
 </body>
 </html>

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en" data-theme="dark" data-skin="dark">
 <head>
 <meta charset="utf-8">
+<script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
+<script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Positionen und Tokens — infinite alphabets</title>
+<title data-i18n="pos.title">Positions and tokens — infinite alphabets</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -12,11 +14,19 @@
 <header class="site">
   <span class="brand">infinite alphabets</span>
   <nav>
-    <a href="index.html">Start</a>
-    <a href="playground.html">PA-Playground</a>
-    <a href="positions.html" class="active">Positionen</a>
-    <a href="semantics.html">Semantik</a>
+    <a href="index.html" data-i18n="nav.start">Start</a>
+    <a href="playground.html" data-i18n="nav.playground">PA playground</a>
+    <a href="positions.html" class="active" data-i18n="nav.positions">Positions</a>
+    <a href="semantics.html" data-i18n="nav.semantics">Semantics</a>
   </nav>
+  <div class="chrome">
+    <div class="group">
+      <button class="seg lang-seg" data-lang="de">DE</button><button class="seg lang-seg" data-lang="en">EN</button>
+    </div>
+    <div class="group">
+      <button class="seg theme-seg" data-theme-set="light" data-i18n-attr="aria-label:theme.light;title:theme.light"></button><button class="seg theme-seg" data-theme-set="grey" data-i18n-attr="aria-label:theme.grey;title:theme.grey"></button><button class="seg theme-seg" data-theme-set="dark" data-i18n-attr="aria-label:theme.dark;title:theme.dark"></button>
+    </div>
+  </div>
 </header>
 
 <main>
@@ -25,7 +35,7 @@
     <!-- Spalte 1: Editor -->
     <div>
       <div class="panel">
-        <h2>1-VA</h2>
+        <h2 data-i18n="pos.va.h">1-VA</h2>
         <div class="field-row">
           <select id="ex"></select>
         </div>
@@ -35,43 +45,28 @@
       </div>
 
       <div class="panel">
-        <h2>Was eine Position ist</h2>
-        <p class="hint">
-          Ein 1-VA ist deterministisch per Belegung: für jede Wahl von μ(y) gibt es genau einen
-          Lauf. Ein Wort w interessiert also nur über die Frage, wo diese Läufe enden. Für jeden
-          Buchstaben a von w gibt es ein <strong>rundes Token</strong> im Endzustand des Laufs mit
-          μ(y) = a, und ein <strong>eckiges Token</strong> für alle μ(y), die in w nicht vorkommen.
-          Der Vektor der Tokenzahlen ist die Position von w.
-        </p>
-        <p class="hint">
-          w wird akzeptiert genau dann, wenn irgendein Token in einem akzeptierenden Zustand sitzt.
-          Der Automat ist universell genau dann, wenn jede erreichbare Position akzeptierend ist.
-          Welcher Buchstabe genau angehängt wird, ist egal: nur der Zustand seines Tokens zählt.
-        </p>
-        <p class="hint">
-          Die Positionsmenge ist im Allgemeinen unendlich. Die Entscheidungsprozedur des Papers
-          läuft über Erreichbarkeit in Vektoradditionssystemen und ist Ackermann-hart; sie ist
-          hier <strong>nicht</strong> implementiert. Diese Seite erkundet nur bis zu einer
-          gewählten Tiefe.
-        </p>
+        <h2 data-i18n="pos.what.h">What a position is</h2>
+        <p class="hint" data-i18n-html="pos.what.p1"></p>
+        <p class="hint" data-i18n-html="pos.what.p2"></p>
+        <p class="hint" data-i18n-html="pos.what.p3"></p>
       </div>
     </div>
 
     <!-- Spalte 2: Animation -->
     <div>
       <div class="panel">
-        <h2>Tokens</h2>
+        <h2 data-i18n="pos.tokens.h">Tokens</h2>
         <div class="graph-wrap"><svg class="graph" id="graph"></svg></div>
         <div class="word-display" id="wordDisplay"></div>
         <div class="btn-row" id="letterButtons"></div>
         <div class="btn-row">
-          <button id="undo">← Undo</button>
-          <button id="reset">Reset</button>
+          <button id="undo" data-i18n="pos.undo">← Undo</button>
+          <button id="reset" data-i18n="pos.reset">Reset</button>
         </div>
         <div class="legend">
-          <span><i class="acc"></i> akzeptierend</span>
-          <span>● rundes Token (ein Buchstabe)</span>
-          <span>■ eckiges Token (frisches μ)</span>
+          <span><i class="acc"></i> <span data-i18n="pos.legend.acc">accepting</span></span>
+          <span data-i18n="pos.legend.round">● round token (one letter)</span>
+          <span data-i18n="pos.legend.square">■ square token (fresh μ)</span>
         </div>
       </div>
     </div>
@@ -79,25 +74,30 @@
     <!-- Spalte 3: Vektor und Erkundung -->
     <div>
       <div class="panel">
-        <h2>Position</h2>
+        <h2 data-i18n="pos.pos.h">Position</h2>
         <div class="vec" id="vec"></div>
         <p class="hint" id="applied"></p>
         <div id="posVerdict"></div>
         <details>
-          <summary>Matrizen M, B und die Vektoren v<sup>i</sup></summary>
+          <summary data-i18n-html="pos.matrices">Matrices M, B and the vectors v<sup>i</sup></summary>
           <div id="matrices"></div>
         </details>
       </div>
 
       <div class="panel">
-        <h2>Erkundung</h2>
+        <h2 data-i18n="pos.explore.h">Exploration</h2>
         <div class="field-row">
-          <label>Tiefe (Wortlänge) ≤ <input type="text" id="depth" value="6" style="width:3rem"></label>
-          <button id="explore" class="primary">Start</button>
+          <label><span data-i18n="pos.explore.depth">Depth (word length) ≤</span> <input type="text" id="depth" value="6" style="width:3rem"></label>
+          <button id="explore" class="primary" data-i18n="pos.explore.start">Start</button>
         </div>
         <div id="exploreOut"></div>
         <div class="pos-table"><table id="posTable"><thead>
-          <tr><th>Länge</th><th>Position</th><th>Wort</th><th>akz.</th></tr>
+          <tr>
+            <th data-i18n="pos.th.len">Length</th>
+            <th data-i18n="pos.th.pos">Position</th>
+            <th data-i18n="pos.th.word">Word</th>
+            <th data-i18n="pos.th.acc">acc.</th>
+          </tr>
         </thead><tbody></tbody></table></div>
       </div>
     </div>
@@ -105,10 +105,11 @@
   </div>
 </main>
 
-<footer class="site">
-  Positionen und Nachfolgermatrizen nach Alber und Rümmer, ATVA §5.
-</footer>
+<footer class="site" data-i18n="pos.footer">Positions and successor matrices after Alber and Rümmer, ATVA §5.</footer>
 
+<script src="assets/js/strings.js"></script>
+<script src="assets/js/messages.js"></script>
+<script src="assets/js/site-chrome.js"></script>
 <script src="assets/js/fraction.js"></script>
 <script src="assets/js/intervals.js"></script>
 <script src="assets/js/formula.js"></script>

@@ -6,6 +6,13 @@
 (function (root) {
   'use strict';
 
+  // Meldungstexte: root.Msg uebersetzt, fehlt es (Modul ohne messages.js),
+  // bleibt der deutsche Text aus dem Aufruf stehen.
+  function M(key, fallback) {
+    if (typeof root.Msg === 'function') return root.Msg.apply(null, arguments);
+    return fallback;
+  }
+
   const Fo = root.Formula;
   const Au = root.Automaton;
   const TE = root.TheoryEq;
@@ -54,7 +61,7 @@
       case 'and': return ast.xs.every(function (c) { return evalUnder(c, xEqY); });
       case 'or': return ast.xs.some(function (c) { return evalUnder(c, xEqY); });
       case 'atom': {
-        if (!ast.eqSide || ast.eqSide.kind !== 'param') throw new Error('1-VA: nur Atome über dem Parameter y');
+        if (!ast.eqSide || ast.eqSide.kind !== 'param') throw new Error(M('msg.vaOnlyParam', '1-VA: nur Atome über dem Parameter y'));
         return ast.rel === '=' ? xEqY : !xEqY;
       }
     }
@@ -113,7 +120,7 @@
 
   // π_i: bekannter Buchstabe, dessen Token in q_i sitzt. Erlaubt nur, wenn p[i] > 0.
   function successorKnown(info, mats, p, i) {
-    if (p[i] <= 0) throw new Error('In q' + (i + 1) + ' sitzt kein rundes Token');
+    if (p[i] <= 0) throw new Error(M('msg.noRoundToken', 'In q' + (i + 1) + ' sitzt kein rundes Token', i + 1));
     return addVec(matVec(mats.M, p), mats.v[i]);
   }
 
