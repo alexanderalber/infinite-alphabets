@@ -151,7 +151,14 @@
     const sel = ta.selectionStart;
     ta.value = lines.join('\n');
     ta.selectionStart = ta.selectionEnd = Math.min(sel, ta.value.length);
-    try { state[slot] = Au.parseDSL(ta.value); } catch (e) { /* Fehler zeigt refresh */ return; }
+    // Die Position im vorhandenen Objekt setzen statt die DSL neu zu parsen. Ein
+    // frisch geparster Automat waere ein anderes Objekt, und die laufende
+    // Simulation erkennt ihren Automaten in redraw() an der Identitaet
+    // (sim.forAutomaton === A). Nach dem Ziehen fiele die Markierung im Graphen
+    // sonst stumm weg, obwohl sich nur die Geometrie geaendert hat.
+    const A = state[slot];
+    if (!A) return;
+    A.pos[st] = { x: x, y: y };
     // Neu zeichnen, obwohl der Kreis schon an der richtigen Stelle sitzt: Kanten,
     // Selbstschleifen und Kantenlabels haengen an seiner Position und blieben
     // sonst dort stehen, wo der Zustand vorher war.

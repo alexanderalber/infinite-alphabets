@@ -330,6 +330,46 @@ async function main() {
       check('playground: Slot B markiert nach dem Umschalten', slot.hot === 1, 'markiert: ' + slot.hot);
       check('playground: Tabelle gehoert zu Slot B', slot.rows === 4, String(slot.rows));
 
+      // Ziehen darf die Markierung nicht abraeumen. Der Drag schreibt die
+      // pos-Zeile in die DSL zurueck; parste er dabei den Automaten neu, waere
+      // das ein anderes Objekt als sim.forAutomaton, und redraw() liesse den
+      // Graphen ab dann stumm unmarkiert, obwohl die Simulation weiterlaeuft.
+      const drag = await evaluate(`(function(){
+        const before = document.getElementById('dslB').value;
+        const g = document.querySelector('#graph .state');
+        const r = g.getBoundingClientRect();
+        const x = r.left + r.width / 2, y = r.top + r.height / 2;
+        function pe(type, cx, cy) {
+          return new PointerEvent(type, { pointerId: 1, clientX: cx, clientY: cy, bubbles: true });
+        }
+        // In Bildschirmpixeln ziehen, aber weit genug: eingerastet wird auf das
+        // halbe Raster (75 SVG-Einheiten in x), und die viewBox ist bei einem
+        // Ein-Zustands-Graphen stark skaliert. Ein Ruck von wenigen Pixeln
+        // faende auf denselben Rasterpunkt zurueck, die DSL bliebe gleich.
+        const svg = document.getElementById('graph');
+        const m = svg.getScreenCTM();
+        const dx = 1.5 * 150 * m.a, dy = 1.5 * 110 * m.d;
+        g.dispatchEvent(pe('pointerdown', x, y));
+        g.dispatchEvent(pe('pointermove', x + dx, y + dy));
+        g.dispatchEvent(pe('pointerup', x + dx, y + dy));
+        const after = document.getElementById('dslB').value;
+        return { moved: after !== before && /^\\s*pos\\s+q0\\s/m.test(after),
+                 dsl: after,
+                 hot: document.querySelectorAll('#graph .state.hot').length,
+                 rows: document.querySelectorAll('#confTable tbody tr').length };
+      })()`);
+      check('playground: Ziehen schreibt pos zurueck', drag.moved, drag.dsl.slice(-40));
+      check('playground: Markierung ueberlebt das Ziehen', drag.hot === 1, 'markiert: ' + drag.hot);
+      check('playground: Tabelle ueberlebt das Ziehen', drag.rows === 4, String(drag.rows));
+
+      // Ein Schrittwechsel nach dem Ziehen muss die Markierung weiter setzen.
+      const dragStep = await evaluate(`(function(){
+        const r = document.getElementById('stepRange');
+        r.value = 1; r.dispatchEvent(new Event('input'));
+        return { hot: document.querySelectorAll('#graph .state.hot').length };
+      })()`);
+      check('playground: Schritt nach dem Ziehen markiert', dragStep.hot === 1, 'markiert: ' + dragStep.hot);
+
       // Zurueck auf Slot A, damit die folgenden Pruefungen wieder dort messen.
       await evaluate(`document.getElementById('showA').click()`);
 
