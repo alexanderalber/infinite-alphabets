@@ -45,6 +45,7 @@
     'idx.atva.link': '→ Positionen und Tokens',
     'idx.note': 'Diese Seite ist eine eigenständige Implementierung in JavaScript. Sie benutzt die Scala-Bibliothek der Autoren nicht und hält sich an die Definitionen der Paper. Kein Build-Schritt, keine externen Ressourcen; die Seite läuft auch offline aus dem Dateisystem.',
     'idx.footer': 'Grundlage sind die Paper CIAA und ATVA von Franziska Alber und Philipp Rümmer. Die Seite ist eine eigenständige Umsetzung in JavaScript.',
+    'idx.cross': 'Zu abstrakt? Hier sind drei Gase in einem Dreieck.',
 
     // ---------- Playground: Markup ----------
     'pg.title': 'PA-Playground: infinite alphabets',
@@ -292,6 +293,7 @@
     'idx.atva.link': '→ Positions and tokens',
     'idx.note': 'This site is an independent implementation in JavaScript. It does not use the authors’ Scala library and follows the definitions in the papers. No build step, no external resources; the site also runs offline from the file system.',
     'idx.footer': 'Based on the CIAA and ATVA papers by Franziska Alber and Philipp Rümmer. This site is an independent implementation in JavaScript.',
+    'idx.cross': 'Too abstract? Here are three gases in a triangle.',
 
     // ---------- Playground: markup ----------
     'pg.title': 'PA playground: infinite alphabets',

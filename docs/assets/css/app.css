@@ -179,7 +179,12 @@ html[data-skin="grey"][data-skin="grey"][data-skin="grey"] {
 html {
   scrollbar-color: var(--tool-border) var(--tool-panel);
   scrollbar-width: thin;
+  /* Breite der zentrierten Spalte, an der sich Header und Footer ausrichten.
+     Sie entspricht der max-width von main, das auf den Prosaseiten schmaler
+     ist als auf den Werkzeugseiten. */
+  --site-col: 1700px;
 }
+html:has(main.prose) { --site-col: 780px; }
 ::-webkit-scrollbar { width: 11px; height: 11px; }
 ::-webkit-scrollbar-track { background: var(--tool-panel); }
 ::-webkit-scrollbar-thumb {
@@ -729,6 +734,25 @@ footer.site p:last-child { margin-bottom: 0; }
 /* Quellenangaben: Liste ohne Punkte, damit die Fusszeile ruhig bleibt. */
 footer.site .footer-credit { font-size: 0.95em; }
 footer.site .src { color: var(--tool-text); }
+
+/* Querlink auf das andere Projekt: eine leise Zeile am rechten Rand, damit sie
+   nicht wie eine weitere Quellenangabe gelesen wird. */
+footer.site .footer-cross { margin: 0.7rem 0 0; text-align: right; }
+footer.site .footer-cross a { color: inherit; text-decoration: none; }
+footer.site .footer-cross a:hover,
+footer.site .footer-cross a:focus { color: var(--tool-text); text-decoration: underline; }
+
+/* Header und Footer laufen ueber die volle Breite, weil Hintergrund und
+   Trennlinien das sollen; ihr Inhalt sitzt aber in derselben zentrierten
+   Spalte wie main. Statt eines zusaetzlichen Wrappers waechst dafuer das
+   Innenmass: 1.2rem Grundabstand plus die Haelfte dessen, was das Fenster
+   breiter ist als die Spalte. Der Wert passt zu main, weil dessen max-width
+   dank border-box die eigenen 1.2rem schon enthaelt. Die Regel steht hinter
+   footer.site, weil sie dieselbe Spezifitaet hat und sonst verloere. */
+header.site,
+footer.site {
+  padding-inline: calc(1.2rem + max(0px, (100% - var(--site-col)) / 2));
+}
 
 /* Teilen-Panel: lange URLs duerfen das Layout nicht sprengen. */
 #linkOut { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; }
