@@ -724,6 +724,11 @@ details[open] summary { margin-bottom: 0.4rem; }
 .pos-table { max-height: 320px; overflow-y: auto; }
 
 footer.site { border-top: 1px solid var(--tool-hairline); margin-top: 2rem; padding: 1rem 1.2rem; font-size: 0.85rem; color: var(--tool-note); }
+footer.site p { margin: 0 0 0.35rem; }
+footer.site p:last-child { margin-bottom: 0; }
+/* Quellenangaben: Liste ohne Punkte, damit die Fusszeile ruhig bleibt. */
+footer.site .footer-credit { font-size: 0.95em; }
+footer.site .src { color: var(--tool-text); }
 
 /* Teilen-Panel: lange URLs duerfen das Layout nicht sprengen. */
 #linkOut { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; }

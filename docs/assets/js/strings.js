@@ -256,7 +256,10 @@
     'sem.limits.li1': 'Über den reellen Zahlen ist genau ein Parameter erlaubt. Mehrere bräuchten Polyeder statt Intervalle und Projektion per Fourier-Motzkin.',
     'sem.limits.li2': 'Keine ε-Transitionen.',
     'sem.limits.li3': 'Die Entscheidungsprozedur für Universalität von 1-VA (Vektoradditionssysteme) ist nicht implementiert.',
-    'sem.footer': 'Semantik nach den Papern CIAA und ATVA.'
+    'sem.footer': 'Semantik nach den Papern CIAA und ATVA.',
+
+    // ---------- Fusszeile, auf allen Seiten ----------
+    'site.credits': 'Icons von <span class="src">Lucide</span>, ISC-Lizenz.'
   };
 
   const en = {
@@ -500,7 +503,10 @@
     'sem.limits.li1': 'Over the reals exactly one parameter is allowed. Several would need polyhedra instead of intervals and projection by Fourier-Motzkin.',
     'sem.limits.li2': 'No ε-transitions.',
     'sem.limits.li3': 'The decision procedure for universality of 1-VA (vector addition systems) is not implemented.',
-    'sem.footer': 'Semantics after the CIAA and ATVA papers.'
+    'sem.footer': 'Semantics after the CIAA and ATVA papers.',
+
+    // ---------- Footer, on every page ----------
+    'site.credits': 'Icons from <span class="src">Lucide</span>, ISC licence.'
   };
 
   root.STRINGS = { de: de, en: en };
