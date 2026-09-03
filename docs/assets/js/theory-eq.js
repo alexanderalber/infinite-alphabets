@@ -306,27 +306,40 @@
     });
   };
 
-  // Ein Buchstabe, der φ unter der Belegung p erfüllt: Konstante oder frisches Symbol.
+  // Ein Buchstabe, der φ unter der Belegung p erfüllt: Konstante, ein Symbol für einen
+  // Block ohne Konstante, oder ein Symbol ausserhalb aller Blöcke ("frisch").
+  //
+  // Der Rückgabewert nennt immer den Block mit, denn der Name allein trägt die Bedeutung
+  // nicht: derselbe Buchstabe darf entlang eines Pfades nicht einmal "gleich y" und einmal
+  // "ungleich y" heissen, und zwei verschiedene Blöcke dürfen nicht denselben Namen tragen.
+  // Wer die Namen vergibt, muss über den ganzen Pfad Buch führen; deshalb liefert diese
+  // Funktion nur den Block und überlässt die Benennung dem Aufrufer (siehe buildWitness).
+  //   {block: b}   x liegt in Block b (enthält der Block eine Konstante, ist es ihr Name)
+  //   {block: -1}  x liegt in keinem Block
   PartitionTheory.prototype.letterFor = function (ast, mu) {
     const p = mu.value;
-    if (this.evalWithX(ast, p, -1)) return freshSymbol(this.constants);
+    if (this.evalWithX(ast, p, -1)) return { block: -1 };
     for (let i = 0; i < this.constants.length; i++) {
       const b = p[this.params.length + i];
-      if (this.evalWithX(ast, p, b)) return this.constants[i];
+      if (this.evalWithX(ast, p, b)) return { block: b, name: this.constants[i] };
     }
     // Der Buchstabe muss dann mit Parametern zusammenfallen, ohne Konstante zu sein:
-    // dafür gibt es keinen benennbaren Repräsentanten in C, also ein frisches Symbol,
-    // das mit dem Parameterwert identifiziert wird. Das kann nur passieren, wenn der
-    // Block keine Konstante enthält; dann ist der Wert selbst beliebig wählbar.
+    // dafür gibt es keinen benennbaren Repräsentanten in C, also ein Symbol, das mit dem
+    // Parameterwert identifiziert wird. Das kann nur passieren, wenn der Block keine
+    // Konstante enthält; dann ist der Wert selbst beliebig wählbar.
     const blocks = Array.from(new Set(p));
     for (const b of blocks) {
-      if (this.evalWithX(ast, p, b)) return { block: b, sym: freshSymbol(this.constants) };
+      if (this.evalWithX(ast, p, b)) return { block: b };
     }
     return null;
   };
 
+  // Ein Buchstabe aus letterFor ist hier nur ein Block, kein Name: benannt wird erst
+  // beim Ausschreiben eines ganzen Pfades (buildWitness). Zum Anzeigen bleibt der Block.
   PartitionTheory.prototype.formatLetter = function (l) {
-    return typeof l === 'string' ? l : String(l.sym);
+    if (typeof l === 'string') return l;
+    if (l && l.name !== undefined) return l.name;
+    return l && l.block >= 0 ? '[' + l.block + ']' : '∉';
   };
 
   root.TheoryEq = {

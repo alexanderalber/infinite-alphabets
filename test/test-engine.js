@@ -159,6 +159,38 @@ H.eq('doppelter Buchstabe nichtleer', String(Au.emptinessCheck(double).empty), '
 const dblWit = Au.emptinessCheck(double).witness;
 H.check('Zeuge wird akzeptiert', Au.simulate(double, dblWit.word).accepted, dblWit.wordText + ' / ' + dblWit.mu);
 
+// Zeugennamen über den ganzen Pfad: ein Name bedeutet "derselbe Wert", also darf derselbe
+// Buchstabe nicht einmal "gleich y" und einmal "ungleich y" heissen, und zwei verschiedene
+// Blöcke dürfen nicht denselben Namen tragen. Die Belegung selbst war schon vorher richtig,
+// falsch war nur das ausgeschriebene Wort.
+const wFresh = Au.parseDSL('theory equality\nstates q0 q1 q2\ninitial q0\naccepting q2\n' +
+  'q0 -> q1 : x = y and x != a\nq1 -> q2 : x != y');
+const witFresh = Au.emptinessCheck(wFresh).witness;
+H.check('frisch nach Blockbuchstabe: Zeuge wird akzeptiert',
+  Au.simulate(wFresh, witFresh.word).accepted, witFresh.wordText + ' / ' + witFresh.mu);
+H.check('frisch nach Blockbuchstabe: Buchstaben verschieden',
+  witFresh.word[0] !== witFresh.word[1], witFresh.wordText);
+
+const wBlocks = Au.parseDSL('theory equality\nstates q0 q1 q2\ninitial q0\naccepting q2\n' +
+  'q0 -> q1 : x = y1 and x != y2\nq1 -> q2 : x = y2 and x != y1');
+const witBlocks = Au.emptinessCheck(wBlocks).witness;
+H.check('verschiedene Blöcke, verschiedene Namen',
+  witBlocks.word[0] !== witBlocks.word[1], witBlocks.wordText);
+H.check('verschiedene Blöcke: Zeuge wird akzeptiert',
+  Au.simulate(wBlocks, witBlocks.word).accepted, witBlocks.wordText + ' / ' + witBlocks.mu);
+
+const wSame = Au.parseDSL('theory equality\nstates q0 q1 q2\ninitial q0\naccepting q2\n' +
+  'q0 -> q1 : x = y\nq1 -> q2 : x = y');
+const witSame = Au.emptinessCheck(wSame).witness;
+H.eq('derselbe Block, derselbe Name', witSame.word[0], witSame.word[1]);
+
+const wConst = Au.parseDSL('theory equality\nstates q0 q1 q2\ninitial q0\naccepting q2\n' +
+  'q0 -> q1 : x = a\nq1 -> q2 : x = y and x != a');
+const witConst = Au.emptinessCheck(wConst).witness;
+H.eq('Block mit Konstante behält ihren Namen', witConst.word[0], 'a');
+H.check('Konstante und Parameterblock: Zeuge wird akzeptiert',
+  Au.simulate(wConst, witConst.word).accepted, witConst.wordText + ' / ' + witConst.mu);
+
 H.group('Vervollständigen und Komplement');
 const A3sink = Au.addSink(A3);
 H.eq('A₃ + Sink hat 2 Zustände', String(A3sink.states.length), '2');

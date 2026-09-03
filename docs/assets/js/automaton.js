@@ -380,14 +380,35 @@
   }
 
   // Aus dem Pfad ein konkretes Wort bauen: μ* aus S fixieren, dann pro Transition ein x.
+  //
+  // Die Buchstaben müssen über den ganzen Pfad zusammenpassen, denn ein Name trägt in der
+  // Gleichheitstheorie eine Aussage: zwei gleiche Namen heissen "derselbe Wert". Deshalb
+  // liefert letterFor dort nur den Block, und die Namen werden hier vergeben, mit einem
+  // festen Namen je Block und einem neuen für jedes "frisch". Ohne diese Buchführung
+  // hiesse derselbe Buchstabe einmal "gleich y" und einmal "ungleich y".
   function buildWitness(A, th, node) {
     const mu = th.witness(node.S);
     if (!mu) return null;
     const letters = [];
+    const nameOfBlock = new Map(); // Blockindex → Name
+    const used = A.constants.slice();
     for (const t of node.path) {
       const l = th.letterFor(t.ast, mu);
-      if (l === null) return null;
-      letters.push(typeof l === 'object' && l.sym ? l.sym : l);
+      if (l === null || l === undefined) return null;
+      // Nur die Partitionsdarstellung liefert Blöcke; sonst ist l schon der Buchstabe
+      // (Fraction in der reellen Theorie, Symbol in der Klassendarstellung).
+      if (typeof l !== 'object' || l.block === undefined) { letters.push(l); continue; }
+      if (l.name !== undefined) {                              // Block mit Konstante
+        nameOfBlock.set(l.block, l.name);
+        letters.push(l.name);
+        continue;
+      }
+      if (l.block >= 0 && nameOfBlock.has(l.block)) { letters.push(nameOfBlock.get(l.block)); continue; }
+      // Neuer Name: weder Konstante noch ein schon vergebener Blockname.
+      const name = TE.freshSymbol(used);
+      used.push(name);
+      if (l.block >= 0) nameOfBlock.set(l.block, name);
+      letters.push(name);
     }
     return { word: letters, mu: mu.text, wordText: formatWord(A, letters) };
   }
