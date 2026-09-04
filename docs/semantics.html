@@ -2,6 +2,12 @@
 <html lang="en" data-theme="dark" data-skin="dark">
 <head>
 <meta charset="utf-8">
+<!-- Die Seite kennt beide Polaritaeten und schaltet selbst. Ohne diese
+     Angabe halten Chromes automatischer Dunkelmodus und die einschlaegigen
+     Erweiterungen die Seite fuer ungeschuetzt und rechnen ihre Farben nach,
+     was in SVG die schwachen Fuellungen (fill) trifft und aus den Kaesten
+     hinter den Kantenbeschriftungen helle Bloecke macht. -->
+<meta name="color-scheme" content="dark light">
 <script>(function(){var d='dark',P={light:'light',dark:'dark',grey:'dark'},k=function(v){return typeof P[v]=='string'},e=document.documentElement,t=new URLSearchParams(location.search).get('theme');if(k(t)){try{localStorage.setItem('theme',t)}catch(x){}}else{try{t=localStorage.getItem('theme')}catch(x){}}if(!k(t))t=d;e.dataset.skin=t;e.dataset.theme=P[t];e.style.colorScheme=P[t];})();</script>
 <script>(function(){var p=new URLSearchParams(location.search).get('lang'),l;if(p==='en'||p==='de'){l=p}else{try{l=localStorage.getItem('lang')}catch(e){}}document.documentElement.lang=(l==='de'||l==='en')?l:'en';})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
