@@ -171,6 +171,18 @@ async function main() {
       awaitPromise: true
     }, sid);
     await wait(800);
+  } else if (process.argv.some(function (a) { return a === '--map'; })) {
+    // Die beiden neuen Flaechen zusammen: y auf dem Zahlenstrahl festgehalten
+    // und die Sprachkarte gerechnet.
+    await send('Runtime.evaluate', {
+      expression: "(function(){"
+        + "var s=document.getElementById('numberLine'),r=s.getBoundingClientRect();"
+        + "s.dispatchEvent(new PointerEvent('pointerdown',"
+        + "{clientX:r.left+r.width*0.62,clientY:r.top+r.height*0.5,bubbles:true}));"
+        + "document.getElementById('mkMap').click();})()",
+      awaitPromise: true
+    }, sid);
+    await wait(1200);
   } else if (process.argv.some(function (a) { return a === '--info'; })) {
     await send('Runtime.evaluate', {
       expression: "document.querySelectorAll('.info-btn')[4].click()", awaitPromise: true

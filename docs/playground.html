@@ -138,6 +138,18 @@
           <tbody></tbody>
         </table>
       </div>
+
+      <!-- Der Zahlenstrahl gehoert zum Wort, bekommt aber ein eigenes Panel:
+           er gilt nur in der reellen Theorie und verschwindet sonst ganz. -->
+      <div class="panel" id="nlPanel" data-info="info.pg.nl" style="display:none">
+        <h2 data-i18n="pg.nl.h">Number line</h2>
+        <svg class="nl" id="numberLine"></svg>
+        <div id="nlVerdict"></div>
+        <div class="btn-row">
+          <button data-icon="eraser" id="nlClear" data-i18n="pg.nl.clear">Release y</button>
+        </div>
+        <p class="hint" data-i18n="pg.nl.hint">Click the line to pin y.</p>
+      </div>
     </div>
 
     <!-- Spalte 3: Pruefungen -->
@@ -185,6 +197,18 @@
     </div>
 
   </div>
+
+  <!-- Die Sprachkarte steht ueber die volle Breite unter den Spalten: sie ist
+       ein Raster aus vielen kleinen Kacheln und braucht jede Spalte, die da ist. -->
+  <div class="panel" data-info="info.pg.map">
+    <h2 data-i18n="pg.map.h">Language map</h2>
+    <p class="hint" data-i18n="pg.map.lead">One tile per word, up to the length set under Checks.</p>
+    <div class="btn-row">
+      <button data-icon="layers" id="mkMap" class="primary" data-i18n="pg.map.build">Compute map</button>
+      <button data-icon="eraser" id="clearMap" data-i18n="pg.map.clear">Clear</button>
+    </div>
+    <div id="mapOut"></div>
+  </div>
 </main>
 
 <footer class="site">
@@ -203,6 +227,8 @@
 <script src="assets/js/automaton.js"></script>
 <script src="assets/js/examples.js"></script>
 <script src="assets/js/draw.js"></script>
+<script src="assets/js/numberline.js"></script>
+<script src="assets/js/langmap.js"></script>
 <script src="assets/js/tikz.js"></script>
 <script src="assets/js/share.js"></script>
 <script src="assets/js/playground.js"></script>

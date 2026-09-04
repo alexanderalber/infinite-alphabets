@@ -6,6 +6,9 @@
   const Ex = window.Examples;
   const D = window.Draw;
   const Fo = window.Formula;
+  const I = window.Intervals;
+  const NL = window.NumberLine;
+  const LM = window.LangMap;
   const T = function () { return window.I18n; };
 
   const $ = function (id) { return document.getElementById(id); };
@@ -14,7 +17,8 @@
     A: null, B: null,          // geparste Automaten (oder null bei Fehler)
     which: 'A',                // welcher Automat groß gezeichnet wird
     sim: null,                 // Simulationsergebnis für den aktuellen Automaten
-    step: 0
+    step: 0,
+    mu: null                   // festgehaltenes y (Fraction) oder null, wenn frei
   };
 
   // ---------- Beispielauswahl ----------
@@ -129,13 +133,77 @@
     const highlight = new Map();
     if (state.sim && state.sim.forAutomaton === A) {
       const conf = state.sim.steps[Math.min(state.step, state.sim.steps.length - 1)].conf;
-      for (const [q, S] of conf) highlight.set(q, state.sim.theory.format(S));
+      // Ein festgehaltenes y schneidet die Markierung mit: gezeigt wird dann nur
+      // noch, was unter dieser einen Belegung erreichbar ist. Ohne Marke bleibt
+      // es bei den vollen Parametermengen.
+      const mu = (A.theory === 'reals') ? state.mu : null;
+      for (const [q, S] of conf) {
+        if (mu && !I.contains(S, mu)) continue;
+        highlight.set(q, state.sim.theory.format(S));
+      }
     }
     D.render(svg, A, {
       highlight: highlight,
       onDrag: function (st, x, y) { writeBackPos(state.which, st, x, y); }
     });
+    renderNumberLine();
   }
+
+  // ---------- Zahlenstrahl ----------
+
+  // Das Wort als Punktfolge auf R, die Akzeptanzmenge als Band, y als Marke.
+  // Nur ueber den reellen Zahlen: die Gleichheitstheorie hat keine Ordnung, auf
+  // der sich y auftragen liesse, dort bleibt das Panel weg.
+  function renderNumberLine() {
+    const A = currentAutomaton();
+    const panel = $('nlPanel');
+    const svg = $('numberLine');
+    const box = $('nlVerdict');
+    const reals = !!A && A.theory === 'reals';
+    panel.style.display = reals ? '' : 'none';
+    if (!reals) { state.mu = null; return; }
+    if (!state.sim || state.sim.forAutomaton !== A) {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      box.innerHTML = '';
+      return;
+    }
+    const m = NL.model(A, state.sim, state.mu ? [state.mu] : []);
+    NL.render(svg, m, {
+      mu: state.mu,
+      labels: {
+        accept: T().t('pg.nl.band.acc'),
+        complement: T().t('pg.nl.band.comp'),
+        mu: T().t('pg.nl.mu')
+      },
+      // Die Marke rastet auf ein Achtel des Teilstrichabstands, ein Zug ueber
+      // wenige Pixel liefert also oft denselben Wert. Ohne diesen Vergleich
+      // zeichnete jede Mausbewegung den ganzen Graphen neu.
+      onPick: function (v) {
+        if (state.mu && state.mu.eq(v)) return;
+        state.mu = v;
+        redraw();
+      }
+    });
+    box.innerHTML = muVerdict();
+  }
+
+  function muVerdict() {
+    const mu = state.mu, sim = state.sim;
+    if (!mu) return '<div class="verdict none">' + T().t('pg.nl.free') + '</div>';
+    const txt = T().t('pg.nl.mu') + ' = ' + I.formatEndpoint(mu);
+    const parts = [];
+    const acc = NL.acceptedAt(sim, mu), comp = NL.complementAt(sim, mu);
+    if (acc) parts.push('<div class="verdict acc">' + esc(T().f('pg.nl.acc', txt)) + '</div>');
+    if (comp) parts.push('<div class="verdict comp">' + esc(T().f('pg.nl.compAcc', txt)) + '</div>');
+    if (!acc && !comp) parts.push('<div class="verdict none">' + esc(T().f('pg.nl.rej', txt)) + '</div>');
+    const qs = NL.statesAt(sim, state.step, mu).map(Au.displayState);
+    parts.push('<p class="hint">' + esc(qs.length
+      ? T().f('pg.nl.states', state.step, qs.join(', '))
+      : T().f('pg.nl.nostates', state.step)) + '</p>');
+    return parts.join('');
+  }
+
+  $('nlClear').addEventListener('click', function () { state.mu = null; redraw(); });
 
   // pos-Zeile in die DSL zurückschreiben (Plan 8.1).
   function writeBackPos(slot, st, x, y) {
@@ -437,6 +505,76 @@
     }
   }
 
+  // ---------- Sprachkarte ----------
+
+  // Dieselbe Aufzaehlung wie die beschraenkten Pruefungen, nur bleibt das ganze
+  // Ergebnis stehen. Auf Knopfdruck und nicht laufend: bei sieben Gitterwerten
+  // und Laenge 4 sind das 2801 Woerter, jedes zweimal simuliert.
+  const MAP_GLYPH = { both: 'AB', a: 'A', b: 'B', none: '·', acc: '✓', rej: '·' };
+
+  $('mkMap').addEventListener('click', buildMap);
+  $('clearMap').addEventListener('click', function () { $('mapOut').innerHTML = ''; });
+
+  function buildMap() {
+    const box = $('mapOut');
+    box.innerHTML = '';
+    try {
+      need(state.A, 'A');
+      const o = checkOpts();
+      const data = LM.classify(state.A, state.B, o);
+      box.innerHTML = mapHtml(data, o);
+    } catch (e) {
+      box.innerHTML = '<div class="result-line">' + tagOf('pg.tag.error') + esc(e.message) + '</div>';
+    }
+  }
+
+  function mapHtml(d, o) {
+    const c = d.counts;
+    const parts = [];
+    parts.push('<div class="lm-summary">' + upto(o, d) +
+      (d.hasB
+        ? T().f('pg.map.sumAB', c.both, c.a, c.b, c.none, c.diff, d.checked)
+        : T().f('pg.map.sumA', c.acc, d.checked)) + '</div>');
+    if (d.truncated) parts.push('<p class="hint">' + esc(T().f('pg.map.trunc', d.checked, d.total)) + '</p>');
+    parts.push(mapLegend(d.hasB));
+    parts.push('<div class="lm-body">');
+    for (const row of d.rows) {
+      parts.push('<div class="lm-row"><div class="lm-head">' +
+        esc(T().f('pg.map.row', row.len, row.count)) +
+        (row.truncated ? ' · ' + esc(T().f('pg.map.rowTrunc', row.cells.length)) : '') +
+        '</div><div class="lm-grid">');
+      for (const cell of row.cells) {
+        parts.push('<span class="lm-cell ' + cell.cls + '" data-word="' + esc(cell.text) +
+          '" title="' + esc(cell.text) + '">' + MAP_GLYPH[cell.cls] + '</span>');
+      }
+      parts.push('</div></div>');
+    }
+    parts.push('</div>');
+    parts.push('<p class="hint">' + esc(T().t('pg.map.note')) + '</p>');
+    return parts.join('');
+  }
+
+  function mapLegend(hasB) {
+    const keys = hasB ? ['both', 'a', 'b', 'none'] : ['acc', 'rej'];
+    const items = keys.map(function (k) {
+      return '<span><span class="lm-cell ' + k + '">' + MAP_GLYPH[k] + '</span> ' +
+        esc(T().t('pg.map.lg.' + k)) + '</span>';
+    });
+    return '<div class="lm-legend">' + items.join('') + '</div>';
+  }
+
+  // Eine Kachel ist ein Klickziel, aber zu klein fuer die Affordanzregel: sie
+  // traegt keinen Buttonrahmen, sondern den Hover-Rand aus app.css. Der Zeiger
+  // haengt am Behaelter, damit tausend Kacheln nicht tausend Zuhoerer bedeuten.
+  $('mapOut').addEventListener('click', function (ev) {
+    const t = ev.target;
+    if (!t.classList.contains('lm-cell')) return;
+    const w = t.getAttribute('data-word');
+    if (w === null) return;
+    $('word').value = (w === 'ε') ? '' : w;
+    runSimulation();
+  });
+
   // ---------- Familien mit Parameter n ----------
 
   function bellNumber(n) {
@@ -605,6 +743,9 @@
     $('exA').value = selA;
     $('exB').value = selB;
     $('checkOut').innerHTML = '';
+    // Die Karte ist wie das Pruefprotokoll ein Ergebnis vergangener Klicks und
+    // wird geleert statt uebersetzt.
+    $('mapOut').innerHTML = '';
     $('opNote').textContent = '';
     $('famNote').textContent = '';
     start();

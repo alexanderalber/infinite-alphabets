@@ -10,7 +10,7 @@ const JS_DIR = path.join(__dirname, '..', 'docs', 'assets', 'js');
 // Reihenfolge wie in den HTML-Seiten.
 const FILES = [
   'fraction.js', 'intervals.js', 'formula.js', 'theory-eq.js', 'theory-real.js',
-  'automaton.js', 'examples.js', 'positions-core.js', 'tikz.js'
+  'automaton.js', 'examples.js', 'positions-core.js', 'numberline.js', 'langmap.js', 'tikz.js'
 ];
 
 function loadAll() {

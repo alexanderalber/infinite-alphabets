@@ -586,6 +586,70 @@ svg.graph .token-square rect { fill: none; stroke: var(--tool-emph); stroke-widt
 svg.graph .token-letter { font-size: 9px; fill: var(--tool-ink); font-family: var(--mono); }
 svg.graph .token { transition: transform 400ms ease; }
 
+/* === Zahlenstrahl ===
+ * Die beiden Baender duerfen sich nicht allein ueber die Farbe unterscheiden,
+ * sonst sind sie im grauen Skin dasselbe Rechteck: das akzeptierende hat einen
+ * durchgezogenen Umriss, das komplement-akzeptierende einen gestrichelten, und
+ * beide tragen links ihren Namen. Die Punkte an den Enden sind das zweite
+ * Merkmal, an dem [1,2] und [1,2) auseinandergehen: gefuellt heisst
+ * geschlossen, hohl heisst offen. */
+svg.nl { display: block; width: 100%; height: auto; font-family: "Charter", "Georgia", serif; }
+svg.nl .nl-axis, svg.nl .nl-tick { stroke: var(--edge); stroke-width: 1.2; }
+svg.nl .nl-tick-label { font-size: 10px; fill: var(--tool-note); font-family: var(--mono); }
+svg.nl .nl-stem { stroke: var(--tool-hairline); stroke-width: 1; stroke-dasharray: 2 2; }
+svg.nl .nl-letter { fill: var(--accent); stroke: var(--edge); stroke-width: 1; }
+svg.nl .nl-letter-label { font-size: 12px; fill: var(--tool-note); font-family: var(--mono); }
+svg.nl .nl-band-bed { fill: var(--tool-subtle); stroke: var(--tool-hairline); stroke-width: 1; }
+svg.nl .nl-band-label { font-size: 10px; fill: var(--tool-label); }
+svg.nl .nl-band-empty { font-size: 10px; fill: var(--tool-faint); font-family: var(--mono); }
+svg.nl .nl-band-acc .nl-band-fill { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+svg.nl .nl-band-comp .nl-band-fill { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg.nl .nl-end { stroke: var(--tool-emph); stroke-width: 1.2; }
+svg.nl .nl-end.closed { fill: var(--tool-emph); }
+svg.nl .nl-end.open { fill: var(--tool-surface); }
+svg.nl .nl-mu-line { stroke: var(--hot); stroke-width: 1.6; }
+svg.nl .nl-mu-head { fill: var(--hot); }
+svg.nl .nl-mu-label { font-size: 11px; fill: var(--hot); font-family: var(--mono); }
+svg.nl .nl-hit { fill: transparent; cursor: ew-resize; }
+#nlVerdict { margin-top: 0.5rem; }
+
+/* === Sprachkarte ===
+ * Eine Kachel je Wort. Die Klasse steht als Zeichen in der Kachel und nicht nur
+ * in ihrer Farbe, damit die vier Faelle auch im grauen Skin auseinandergehen.
+ * Die Kachel ist klickbar, traegt aber keinen Buttonrahmen: sie ist zu klein
+ * fuer die Affordanzregel und bekommt den Hover-Rand in Akzentfarbe. */
+#mapOut { margin-top: 0.6rem; }
+.lm-summary { font-size: 0.88rem; margin: 0.2rem 0 0.5rem; }
+.lm-summary .tag { font-family: var(--mono); font-size: 0.78rem; color: var(--tool-note); }
+.lm-body { max-height: 58vh; overflow: auto; }
+.lm-row { margin-bottom: 0.5rem; }
+.lm-head { font-size: 0.8rem; color: var(--tool-label); margin-bottom: 0.2rem; }
+.lm-grid { display: flex; flex-wrap: wrap; gap: 2px; }
+.lm-cell {
+  width: 16px; height: 16px;
+  border: 1px solid var(--tool-hairline);
+  border-radius: 2px;
+  background: var(--tool-subtle);
+  color: var(--tool-note);
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 14px;
+  text-align: center;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  user-select: none;
+}
+.lm-cell:hover { border-color: var(--accent); color: var(--tool-emph); }
+.lm-cell.both { background: var(--accent-soft); border-color: var(--accent); color: var(--tool-emph); }
+.lm-cell.a    { background: var(--tool-surface); border-color: var(--accent); color: var(--tool-emph); }
+.lm-cell.b    { background: var(--tool-surface); border-color: var(--blue); color: var(--tool-emph); }
+.lm-cell.none { background: var(--tool-subtle); border-color: var(--tool-hairline); }
+.lm-cell.acc  { background: var(--accent-soft); border-color: var(--accent); color: var(--tool-emph); }
+.lm-cell.rej  { background: var(--tool-subtle); border-color: var(--tool-hairline); }
+.lm-legend { display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.82rem; color: var(--tool-note); margin: 0.5rem 0; }
+.lm-legend span { display: flex; align-items: center; gap: 0.3rem; }
+.lm-legend .lm-cell { cursor: default; }
+
 table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
 th, td { text-align: left; padding: 0.22rem 0.45rem; border-bottom: 1px solid var(--tool-hairline); vertical-align: top; }
 th { color: var(--tool-label); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }

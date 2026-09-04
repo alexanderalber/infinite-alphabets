@@ -466,6 +466,117 @@ async function main() {
       })()`);
       check('playground: Leerheit gemeldet', /nichtleer/.test(chk), chk.slice(0, 200));
       check('playground: CFPA-Pruefung gemeldet', /Gegenbeispiel|kein Gegenbeispiel/.test(chk), chk.slice(0, 200));
+
+      // Zahlenstrahl: A₂ auf dem Wort 1, 2 akzeptiert genau unter y = 2. Ein
+      // Klick auf die Stelle, an der die 2 steht, muss die Marke dorthin
+      // einrasten und das Verdikt umlegen.
+      const nl = await evaluate(`(async function(){
+        document.getElementById('dslA').value = Examples.byId('A2').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        var w = document.getElementById('word');
+        w.value = '1, 2';
+        w.dispatchEvent(new Event('input'));
+        await new Promise(function(r){ setTimeout(r, 200); });
+        // Ans Wortende: erst dort stehen zwei Zustaende offen (q0 mit y > 2,
+        // q1 mit y = 2), und nur dann zeigt sich, dass die Marke mitschneidet.
+        document.getElementById('stepAll').click();
+        var svg = document.getElementById('numberLine');
+        var r = svg.getBoundingClientRect();
+        // Bildkoordinate der 2 in Pixel: das Modell spannt lo..hi ueber X0..X1.
+        var m = NumberLine.model(Automaton.parseDSL(document.getElementById('dslA').value),
+          { word: [Fraction.fromString('1'), Fraction.fromString('2')], acceptSet: [], complementSet: [] });
+        var t = (2 - m.lo.toNumber()) / (m.hi.toNumber() - m.lo.toNumber());
+        var x = r.left + r.width * (NumberLine.X0 + t * (NumberLine.X1 - NumberLine.X0)) / NumberLine.W;
+        svg.dispatchEvent(new PointerEvent('pointerdown', { clientX: x, clientY: r.top + r.height/2, bubbles: true }));
+        await new Promise(function(r2){ setTimeout(r2, 200); });
+        return {
+          visible: document.getElementById('nlPanel').style.display !== 'none',
+          bands: svg.querySelectorAll('.nl-band').length,
+          letters: svg.querySelectorAll('.nl-letter').length,
+          mu: svg.querySelectorAll('.nl-mu').length,
+          verdict: document.getElementById('nlVerdict').textContent,
+          hot: document.querySelectorAll('#graph .state.hot').length
+        };
+      })()`);
+      check('playground: Zahlenstrahl sichtbar bei reeller Theorie', nl.visible, String(nl.visible));
+      check('playground: ein Band ohne komplement-akzeptierende Zustaende', nl.bands === 1, String(nl.bands));
+      check('playground: beide Buchstaben aufgetragen', nl.letters === 2, String(nl.letters));
+      check('playground: Marke gesetzt', nl.mu === 1, String(nl.mu));
+      check('playground: y rastet auf die 2 ein', /y = 2\b/.test(nl.verdict), nl.verdict.slice(0, 120));
+      check('playground: unter y = 2 akzeptiert', /wird das Wort akzeptiert/.test(nl.verdict), nl.verdict.slice(0, 120));
+      check('playground: die Marke schneidet den Graphen mit', nl.hot === 1, String(nl.hot));
+
+      // Offene und geschlossene Bandgrenze muessen sich im Bild unterscheiden:
+      // x < y akzeptiert das Wort 1 fuer alle y > 1, die 1 selbst gehoert nicht
+      // dazu. Der Endpunkt ist deshalb hohl, und das unendliche Ende traegt gar
+      // keine Marke.
+      const nlEnds = await evaluate(`(async function(){
+        document.getElementById('dslA').value =
+          'theory reals\\nstates q0 q1\\ninitial q0\\naccepting q1\\nq0 -> q1 : x < y';
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        var w = document.getElementById('word');
+        w.value = '1';
+        w.dispatchEvent(new Event('input'));
+        await new Promise(function(r){ setTimeout(r, 250); });
+        var svg = document.getElementById('numberLine');
+        return {
+          open: svg.querySelectorAll('.nl-end.open').length,
+          closed: svg.querySelectorAll('.nl-end.closed').length,
+          confs: document.querySelector('#confTable tbody tr:last-child').textContent
+        };
+      })()`);
+      check('playground: die offene Grenze ist hohl', nlEnds.open === 1, String(nlEnds.open));
+      check('playground: kein geschlossener Endpunkt', nlEnds.closed === 0, String(nlEnds.closed));
+      check('playground: und die Menge dazu ist y > 1', /y > 1/.test(nlEnds.confs), nlEnds.confs.slice(0, 80));
+
+      const nlOff = await evaluate(`(async function(){
+        document.getElementById('dslA').value = Examples.byId('A2').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('word').value = '1, 2';
+        document.getElementById('word').dispatchEvent(new Event('input'));
+        await new Promise(function(r){ setTimeout(r, 250); });
+        document.getElementById('stepAll').click();
+        document.getElementById('nlClear').click();
+        await new Promise(function(r){ setTimeout(r, 200); });
+        var before = { verdict: document.getElementById('nlVerdict').textContent,
+                       hot: document.querySelectorAll('#graph .state.hot').length };
+        document.getElementById('dslA').value = Examples.byId('V').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        document.getElementById('word').value = 'ab';
+        document.getElementById('word').dispatchEvent(new Event('input'));
+        await new Promise(function(r){ setTimeout(r, 300); });
+        before.hidden = document.getElementById('nlPanel').style.display === 'none';
+        return before;
+      })()`);
+      check('playground: freigegebenes y meldet sich', /y ist frei/.test(nlOff.verdict), nlOff.verdict.slice(0, 80));
+      check('playground: ohne Marke wieder beide Zustaende markiert', nlOff.hot === 2, String(nlOff.hot));
+      check('playground: kein Zahlenstrahl in der Gleichheitstheorie', nlOff.hidden, String(nlOff.hidden));
+
+      // Sprachkarte: V ist universell, also traegt jede Kachel das Haekchen.
+      const map = await evaluate(`(async function(){
+        document.getElementById('maxLen').value = '3';
+        document.getElementById('mkMap').click();
+        await new Promise(function(r){ setTimeout(r, 500); });
+        var cells = document.querySelectorAll('#mapOut .lm-body .lm-cell');
+        var rej = document.querySelectorAll('#mapOut .lm-body .lm-cell.rej').length;
+        cells[cells.length - 1].click();
+        await new Promise(function(r){ setTimeout(r, 300); });
+        return {
+          cells: cells.length,
+          rows: document.querySelectorAll('#mapOut .lm-row').length,
+          rej: rej,
+          summary: document.querySelector('.lm-summary').textContent,
+          word: document.getElementById('word').value,
+          steps: document.querySelectorAll('#confTable tbody tr').length
+        };
+      })()`);
+      // Restricted growth strings ueber a, b, c: 1 + 1 + 2 + 5 = 9 Woerter bis Laenge 3.
+      check('playground: Sprachkarte zaehlt die Woerter bis Laenge 3', map.cells === 9, String(map.cells));
+      check('playground: eine Zeile je Laenge', map.rows === 4, String(map.rows));
+      check('playground: V verwirft keines', map.rej === 0, String(map.rej));
+      check('playground: Karte beschriftet die Schranke', /bis Länge 3/.test(map.summary), map.summary.slice(0, 120));
+      check('playground: Klick auf eine Kachel laedt das Wort', map.word.length === 3, map.word);
+      check('playground: und simuliert es', map.steps === 4, String(map.steps));
     }
 
     if (page === 'positions.html') {

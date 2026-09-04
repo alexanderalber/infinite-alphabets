@@ -42,6 +42,8 @@ docs/assets/js/
   tikz.js            Export als tikz-Bild im Stil der Paper
   share.js           kompakte Kodierung von Automaten und Wort fuer den URL-Hash
   draw.js            SVG-Rendering
+  numberline.js      Zahlenstrahl: Wort als Punktfolge, y als ziehbare Marke
+  langmap.js         Sprachkarte: alle Woerter bis Laenge n, eines je Kachel
   playground.js      UI des Playgrounds
   positions.js       UI der Positions-Seite
 ```
@@ -58,10 +60,11 @@ Einzelne Seite als Screenshot ansehen (headless Chrome, ohne npm-Paket):
 node test/shot.js playground.html
 ```
 
-Fuenf Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,
+Sechs Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,
 Produkte, Entscheidungsverfahren), Positionen (Matrizen aus ATVA, Simulation gegen
 Matrixformel auf zufälligen 1-VA), Beispiele (jedes Beispiel gegen seine Sprache, plus
-TikZ-Export) und Seitentests, die die HTML-Seiten in headless Chrome laden und
+TikZ-Export), Ansichten (Zahlenstrahl und Sprachkarte, letztere als Kreuzprobe gegen
+`checkEquivalence` und `checkUniversality`) und Seitentests, die die HTML-Seiten in headless Chrome laden und
 durchklicken; sie melden auch Konsolenfehler, die erst durch die Klicks entstehen. Ohne installiertes Chrome überspringt die letzte Suite sich selbst.
 
 Die Seitentests laden die Seiten mit `?lang=de`, weil ihre Erwartungen die deutschen
@@ -79,6 +82,14 @@ Skolem-Bedingung, SDPA, Äquivalenz), wird nur bis zu einer Längenschranke gepr
 im UI entsprechend beschriftet. Ein gefundenes Gegenbeispiel ist exakt; das Ausbleiben
 eines Gegenbeispiels ist kein Beweis. Universalität von PA ist unentscheidbar, für 1-VA
 entscheidbar, aber Ackermann-hart und hier nicht implementiert.
+
+Dieselbe Schranke gilt für die Sprachkarte: jede einzelne Kachel ist exakt, die Karte als
+ganze endet bei der eingestellten Länge und sagt über längere Wörter nichts.
+
+Der Zahlenstrahl liest nur ab, was die Simulation ohnehin gerechnet hat: ein Zustand ist
+unter y = μ aktiv, wenn μ in seiner Parametermenge liegt, und eine Transition feuert, wenn
+μ ihre Formel unter dem gelesenen Buchstaben erfüllt. Die Marke selbst ist ein Bruch, kein
+Gleitkommawert; gerastert wird sie auf ein Achtel des Teilstrichabstands.
 
 ## Grenzen dieser Fassung
 
