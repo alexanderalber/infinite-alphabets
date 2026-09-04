@@ -126,6 +126,26 @@ H.check('die festgehaltene Marke bleibt im Bild', (function () {
   return m.hi.ge(f(40));
 })());
 
+// Ziehen ueber den Rand hinaus darf den Ausschnitt nicht aufblasen. Die Marke
+// wird dabei auf das Ende geklemmt, und wenn dieses Ende wieder einen Viertel
+// Rand bekaeme, waere jede Mausbewegung ein Faktor 1,25 auf die Spanne.
+H.group('Zahlenstrahl: Ziehen ueber den Rand');
+(function () {
+  let mu = null, m = NL.model(A2, sim2, []);
+  const start = m.hi.sub(m.lo);
+  for (let i = 0; i < 50; i++) {
+    mu = NL.pickValue(m, 5000);          // weit rechts neben der Achse
+    m = NL.model(A2, sim2, [mu]);
+  }
+  H.check('rechts laeuft der Ausschnitt nicht davon', m.hi.sub(m.lo).le(start), m.lo + '..' + m.hi);
+  H.check('und die Marke bleibt am Ende stehen', mu.le(m.hi), String(mu));
+  for (let i = 0; i < 50; i++) {
+    mu = NL.pickValue(m, -5000);         // weit links daneben
+    m = NL.model(A2, sim2, [mu]);
+  }
+  H.check('links auch nicht', m.hi.sub(m.lo).le(start), m.lo + '..' + m.hi);
+})();
+
 // ---------------- Sprachkarte ----------------
 
 H.group('Sprachkarte: Einteilung');

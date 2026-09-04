@@ -102,6 +102,13 @@
   // auf, die sichtbar bleiben muessen, auch wenn nichts sie sonst erzwingt: die
   // festgehaltene Marke bleibt so im Bild, wenn ein neues Wort den Ausschnitt
   // verschiebt. Sonst filterte ein unsichtbares y den Graphen weiter.
+  //
+  // Der Rand wird nur um die Daten gelegt, und extra erweitert danach ohne
+  // eigenen Rand. Andersherum koppelt es zurueck: wer ueber das Ende hinaus
+  // zieht, bekommt die Marke auf das Ende geklemmt, das Ende geht als Wert in
+  // die naechste Rechnung ein und bekommt wieder ein Viertel Rand. Jedes
+  // Mausereignis multiplizierte die Spanne so mit 1,25, und nach einer halben
+  // Sekunde Ziehen standen zehnstellige Zahlen an der Achse.
   function model(A, sim, extra) {
     const letters = lettersOf((sim && sim.word) || []);
     const accept = (sim && sim.acceptSet) || [];
@@ -109,13 +116,17 @@
     const comp = hasComp ? ((sim && sim.complementSet) || []) : null;
     const vals = letters.map(function (l) { return l.value; })
       .concat(endpointsOf(accept))
-      .concat(hasComp ? endpointsOf(comp) : [])
-      .concat(extra || []);
+      .concat(hasComp ? endpointsOf(comp) : []);
     const r = axisRange(vals);
-    const step = tickStep(r.hi.sub(r.lo));
+    let lo = r.lo, hi = r.hi;
+    for (const v of extra || []) {
+      if (v.lt(lo)) lo = v;
+      if (v.gt(hi)) hi = v;
+    }
+    const step = tickStep(hi.sub(lo));
     return {
       letters: letters, accept: accept, comp: comp, hasComp: hasComp,
-      lo: r.lo, hi: r.hi, step: step, ticks: ticks(r.lo, r.hi, step)
+      lo: lo, hi: hi, step: step, ticks: ticks(lo, hi, step)
     };
   }
 
