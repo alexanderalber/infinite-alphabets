@@ -58,10 +58,29 @@ H.eq('links vom Rand wird geklemmt', NL.valueAt(-0.3, f(0), f(4), f(1, 2)).toStr
 H.eq('rechts vom Rand wird geklemmt', NL.valueAt(1.7, f(0), f(4), f(1, 2)).toString(), '4');
 H.eq('ein Raster ueber den Rand rueckt einwaerts',
   NL.valueAt(1, f(0), f(9, 4), f(1, 2)).toString(), '2');
-H.eq('die Marke rastet auf einen nahen Wert ein',
-  NL.snap(f(19, 10), [f(2), f(5)], f(1, 5)).toString(), '2');
-H.eq('weit entfernte Kandidaten ziehen nicht',
-  NL.snap(f(19, 10), [f(5)], f(1, 5)).toString(), '19/10');
+// Der Fall aus dem Test von Hand: beim Wort 1, 1/2, 8/5 liessen sich 1/2 und 1
+// anklicken, 8/5 nie. Beide ersten liegen auf dem Raster von einem Achtel
+// Teilstrichabstand, 8/5 liegt zwischen zwei Rasterpunkten und war von beiden
+// weiter weg als die Fangweite. Es wird deshalb zuerst gefangen und erst dann
+// gerastert, und gefangen wird in Pixeln.
+H.group('Zahlenstrahl: Klick trifft jeden Buchstaben');
+const wort = [f(1), f(1, 2), f(8, 5)];
+const mKlick = NL.model(
+  Au.parseDSL(['theory reals', 'states q0', 'initial q0', 'accepting q0', 'q0 -> q0 : true'].join('\n')),
+  { word: wort, acceptSet: [], complementSet: [] });
+for (const v of wort) {
+  H.eq('Klick auf ' + v + ' trifft ' + v,
+    NL.pickValue(mKlick, NL.xOf(mKlick, v)).toString(), v.toString());
+}
+H.check('auch ein paar Pixel daneben faengt noch',
+  NL.pickValue(mKlick, NL.xOf(mKlick, f(8, 5)) + 4).eq(f(8, 5)));
+H.check('weit daneben faengt nicht mehr',
+  !NL.pickValue(mKlick, NL.xOf(mKlick, f(8, 5)) + 30).eq(f(8, 5)));
+H.check('und liefert dort einen Rasterwert',
+  (function () {
+    const v = NL.pickValue(mKlick, NL.xOf(mKlick, f(8, 5)) + 30);
+    return v.div(mKlick.step.mul(f(1, 8))).den === 1n;
+  })());
 
 // ---------------- Ablesung unter festem y ----------------
 //

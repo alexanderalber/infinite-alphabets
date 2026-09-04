@@ -31,6 +31,7 @@
   const Y_BAND0 = 74, BAND_H = 15, BAND_GAP = 5;
 
   const GRID_DIV = 8;  // Rasterweite beim Ziehen: ein Achtel Teilstrichabstand
+  const SNAP_PX = 7;   // Fangweite um Buchstaben, Bandgrenzen und Teilstriche
 
   // ---------- Modell (ohne DOM, testbar) ----------
 
@@ -159,24 +160,33 @@
     return v;
   }
 
-  // Auf einen der Kandidaten einrasten, wenn einer nah genug liegt. Ohne das
-  // waere genau der interessante Fall unerreichbar: die Bandgrenze selbst, an
-  // der sich offen und geschlossen unterscheiden.
-  function snap(v, cands, tol) {
-    let best = null, bd = null;
-    for (const c of cands || []) {
-      const d = c.sub(v).abs();
-      if (d.gt(tol)) continue;
-      if (bd === null || d.lt(bd)) { bd = d; best = c; }
-    }
-    return best === null ? v : best;
-  }
-
   function snapCandidates(m) {
     return m.letters.map(function (l) { return l.value; })
       .concat(endpointsOf(m.accept))
       .concat(m.hasComp ? endpointsOf(m.comp) : [])
       .concat(m.ticks);
+  }
+
+  function xOf(m, v) {
+    return X0 + v.sub(m.lo).toNumber() / m.hi.sub(m.lo).toNumber() * (X1 - X0);
+  }
+
+  // Der Wert zu einer Bildkoordinate. Erst wird nach einem Kandidaten in der
+  // Naehe gesucht, und zwar in Pixeln, dann erst gerastert.
+  //
+  // Die umgekehrte Reihenfolge war ein Fehler: gerastert wird auf ein Achtel
+  // des Teilstrichabstands, und ein Buchstabe muss darauf nicht liegen. Beim
+  // Wort 1, 1/2, 8/5 liegt 8/5 zwischen 25/16 und 26/16 und war von beiden
+  // weiter entfernt als die Fangweite, also liess sich ausgerechnet dieser
+  // Buchstabe nie treffen, waehrend 1/2 und 1 als Rasterpunkte immer trafen.
+  function pickValue(m, px) {
+    let best = null, bd = SNAP_PX;
+    for (const c of snapCandidates(m)) {
+      const d = Math.abs(xOf(m, c) - px);
+      if (d <= bd) { bd = d; best = c; }
+    }
+    if (best !== null) return best;
+    return valueAt((px - X0) / (X1 - X0), m.lo, m.hi, m.step.mul(new F(1n, BigInt(GRID_DIV))));
   }
 
   // ---------- Zeichnen ----------
@@ -204,8 +214,7 @@
     const H = heightOf(m);
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    const span = m.hi.sub(m.lo);
-    const x = function (v) { return X0 + v.sub(m.lo).toNumber() / span.toNumber() * (X1 - X0); };
+    const x = function (v) { return xOf(m, v); };
     const labels = opts.labels || {};
 
     // Achse und Teilstriche
@@ -223,7 +232,7 @@
     for (const l of m.letters) {
       const px = x(l.value);
       svg.appendChild(el('line', { x1: px, y1: Y_LET, x2: px, y2: Y_AXIS, class: 'nl-stem' }));
-      const dot = el('circle', { cx: px, cy: Y_LET, r: 4.2, class: 'nl-letter' });
+      const dot = el('circle', { cx: px, cy: Y_LET, r: 5, class: 'nl-letter' });
       dot.appendChild(el('title', {}, I.formatEndpoint(l.value)));
       svg.appendChild(dot);
       svg.appendChild(el('text', { x: px, y: Y_IDX, class: 'nl-letter-label', 'text-anchor': 'middle' },
@@ -317,11 +326,7 @@
       const ctx = svg.__nl;
       if (!ctx) return;
       const p = svgPoint(svg, ev);
-      const frac = (p.x - X0) / (X1 - X0);
-      const mm = ctx.m;
-      const raw = valueAt(frac, mm.lo, mm.hi, mm.step.mul(new F(1n, BigInt(GRID_DIV))));
-      const tol = mm.hi.sub(mm.lo).mul(new F(1n, 80n));
-      ctx.onPick(snap(raw, snapCandidates(mm), tol));
+      ctx.onPick(pickValue(ctx.m, p.x));
     };
 
     svg.addEventListener('pointerdown', function (ev) {
@@ -330,7 +335,11 @@
       pick(ev);
       ev.preventDefault();
     });
-    svg.addEventListener('pointermove', function (ev) { if (dragging) pick(ev); });
+    svg.addEventListener('pointermove', function (ev) {
+      if (!dragging) return;
+      pick(ev);
+      ev.preventDefault();
+    });
     svg.addEventListener('pointerup', function () { dragging = false; });
     svg.addEventListener('pointercancel', function () { dragging = false; });
   }
@@ -346,7 +355,8 @@
     isReals: isReals, lettersOf: lettersOf, endpointsOf: endpointsOf,
     axisRange: axisRange, tickStep: tickStep, ticks: ticks, model: model,
     statesAt: statesAt, firing: firing, acceptedAt: acceptedAt, complementAt: complementAt,
-    valueAt: valueAt, snap: snap, snapCandidates: snapCandidates,
-    render: render, heightOf: heightOf, W: W, X0: X0, X1: X1, GRID_DIV: GRID_DIV
+    valueAt: valueAt, pickValue: pickValue, snapCandidates: snapCandidates, xOf: xOf,
+    render: render, heightOf: heightOf,
+    W: W, X0: X0, X1: X1, GRID_DIV: GRID_DIV, SNAP_PX: SNAP_PX
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

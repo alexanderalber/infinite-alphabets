@@ -595,13 +595,17 @@ svg.graph .token { transition: transform 400ms ease; }
  * geschlossen, hohl heisst offen. */
 svg.nl { display: block; width: 100%; height: auto; font-family: "Charter", "Georgia", serif; }
 svg.nl .nl-axis, svg.nl .nl-tick { stroke: var(--edge); stroke-width: 1.2; }
-svg.nl .nl-tick-label { font-size: 10px; fill: var(--tool-note); font-family: var(--mono); }
-svg.nl .nl-stem { stroke: var(--tool-hairline); stroke-width: 1; stroke-dasharray: 2 2; }
-svg.nl .nl-letter { fill: var(--accent); stroke: var(--edge); stroke-width: 1; }
-svg.nl .nl-letter-label { font-size: 12px; fill: var(--tool-note); font-family: var(--mono); }
+svg.nl .nl-tick-label { font-size: 10.5px; fill: var(--tool-note); font-family: var(--mono); }
+svg.nl .nl-stem { stroke: var(--edge); stroke-width: 1; stroke-dasharray: 2 2; }
+/* Der Buchstabe ist der Gegenstand des Bildes und bekommt deshalb die
+   staerkste Farbe der Leiter, nicht den Akzent: der ist in zwei der drei
+   Skins nur eine Nuance vom Untergrund entfernt und liess die Punkte
+   verschwinden. Der helle Rand hebt sie vom Stiel ab. */
+svg.nl .nl-letter { fill: var(--tool-emph); stroke: var(--tool-surface); stroke-width: 1.2; }
+svg.nl .nl-letter-label { font-size: 12px; fill: var(--tool-text); font-family: var(--mono); }
 svg.nl .nl-band-bed { fill: var(--tool-subtle); stroke: var(--tool-hairline); stroke-width: 1; }
 svg.nl .nl-band-label { font-size: 10px; fill: var(--tool-label); }
-svg.nl .nl-band-empty { font-size: 10px; fill: var(--tool-faint); font-family: var(--mono); }
+svg.nl .nl-band-empty { font-size: 11px; fill: var(--tool-note); font-family: var(--mono); }
 svg.nl .nl-band-acc .nl-band-fill { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
 svg.nl .nl-band-comp .nl-band-fill { fill: var(--blue-soft); stroke: var(--blue); stroke-width: 1.2; stroke-dasharray: 4 3; }
 svg.nl .nl-end { stroke: var(--tool-emph); stroke-width: 1.2; }
@@ -611,6 +615,11 @@ svg.nl .nl-mu-line { stroke: var(--hot); stroke-width: 1.6; }
 svg.nl .nl-mu-head { fill: var(--hot); }
 svg.nl .nl-mu-label { font-size: 11px; fill: var(--hot); font-family: var(--mono); }
 svg.nl .nl-hit { fill: transparent; cursor: ew-resize; }
+/* Gezogen wird hier, also darf das Ziehen keinen Text markieren: eine
+   angefangene Auswahl legt sonst den Markierungsbalken des Systems hinter
+   die Beschriftungen, in jedem Skin dieselbe helle Flaeche. Der Graph
+   nebenan haengt am selben Zug und bekommt es deshalb auch. */
+svg.nl, svg.graph { -webkit-user-select: none; user-select: none; }
 #nlVerdict { margin-top: 0.5rem; }
 
 /* === Sprachkarte ===
@@ -626,14 +635,14 @@ svg.nl .nl-hit { fill: transparent; cursor: ew-resize; }
 .lm-head { font-size: 0.8rem; color: var(--tool-label); margin-bottom: 0.2rem; }
 .lm-grid { display: flex; flex-wrap: wrap; gap: 2px; }
 .lm-cell {
-  width: 16px; height: 16px;
+  width: 19px; height: 19px;
   border: 1px solid var(--tool-hairline);
   border-radius: 2px;
   background: var(--tool-subtle);
-  color: var(--tool-note);
+  color: var(--tool-text);
   font-family: var(--mono);
-  font-size: 8px;
-  line-height: 14px;
+  font-size: 9.5px;
+  line-height: 17px;
   text-align: center;
   letter-spacing: -0.5px;
   cursor: pointer;
