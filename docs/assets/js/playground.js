@@ -70,6 +70,14 @@
   // ---------- Parsen und Badges ----------
 
   function refresh(slot) {
+    // Die Sprachkarte ist ein Standbild zu A und B, kein Protokoll wie die
+    // Pruefergebnisse: ihre Kacheln sind anklickbar. Bleibt sie nach einem
+    // Wechsel stehen, laedt ein Klick ein Wort des alten Alphabets in die neue
+    // Simulation, in der Gleichheitstheorie also etwa "1, 1/2" als zwei
+    // Buchstabennamen. Sie wird deshalb weggeraeumt, sobald sich ein Slot
+    // aendert. Das Panel bleibt: anders als der Zahlenstrahl gilt die Karte in
+    // beiden Theorien, sie zaehlt dort nur andere Woerter.
+    if ($('mapOut').firstChild) $('mapOut').innerHTML = '';
     const src = $('dsl' + slot).value;
     const errEl = $('err' + slot), badgeEl = $('badges' + slot);
     errEl.textContent = '';

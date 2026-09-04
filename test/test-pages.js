@@ -577,6 +577,24 @@ async function main() {
       check('playground: Karte beschriftet die Schranke', /bis Länge 3/.test(map.summary), map.summary.slice(0, 120));
       check('playground: Klick auf eine Kachel laedt das Wort', map.word.length === 3, map.word);
       check('playground: und simuliert es', map.steps === 4, String(map.steps));
+
+      // Ein Slotwechsel macht die Karte ungueltig: ihre Kacheln sind
+      // anklickbar, und ein Klick wuerde ein Wort des alten Alphabets in die
+      // neue Simulation laden. Das Panel bleibt trotzdem stehen, anders als der
+      // Zahlenstrahl, denn die Karte gilt in beiden Theorien.
+      const stale = await evaluate(`(async function(){
+        document.getElementById('dslA').value = Examples.byId('A3').dsl;
+        document.getElementById('dslA').dispatchEvent(new Event('input'));
+        await new Promise(function(r){ setTimeout(r, 300); });
+        return {
+          cells: document.querySelectorAll('#mapOut .lm-cell').length,
+          panel: !!document.getElementById('mkMap').offsetParent,
+          nl: document.getElementById('nlPanel').style.display !== 'none'
+        };
+      })()`);
+      check('playground: alte Karte weg nach dem Wechsel', stale.cells === 0, String(stale.cells));
+      check('playground: Karten-Panel bleibt', stale.panel, String(stale.panel));
+      check('playground: Zahlenstrahl ist wieder da', stale.nl, String(stale.nl));
     }
 
     if (page === 'positions.html') {
