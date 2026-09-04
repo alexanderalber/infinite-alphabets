@@ -149,6 +149,20 @@ async function main() {
   await send('Page.navigate', { url: 'http://127.0.0.1:' + port + '/' + page }, sid);
   await wait(1500);
 
+  // Optional: eigenen Ausdruck auswerten und sein Ergebnis ausgeben. Damit
+  // lassen sich Fragen an die fertig gerenderte Seite stellen, die kein Bild
+  // beantwortet, etwa nach den Kontrastwerten. Der Ausdruck laeuft vor allen
+  // anderen Schaltern, das Bild entsteht danach trotzdem.
+  const jsArg = process.argv.find(function (a) { return a.indexOf('--js=') === 0; });
+  if (jsArg) {
+    const r = await send('Runtime.evaluate', {
+      expression: jsArg.slice(5), awaitPromise: true, returnByValue: true
+    }, sid);
+    if (r.exceptionDetails) console.log('Fehler: ' + r.exceptionDetails.text);
+    else console.log(JSON.stringify(r.result.value, null, 1));
+    await wait(200);
+  }
+
   // Optional: vor dem Screenshot einen Knopf klicken, z.B. --click=equiv
   const clickArg = process.argv.find(function (a) { return a.indexOf('--click=') === 0; });
   if (clickArg) {

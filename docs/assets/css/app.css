@@ -195,6 +195,13 @@ html:has(main.prose) { --site-col: 780px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 ::-webkit-scrollbar-corner { background: var(--tool-panel); }
 
+/* Die Textauswahl gehoert genauso in die Leiter wie der Scrollbalken, und aus
+   demselben Grund: der Balken des Systems ist in einem nicht fokussierten
+   Fenster ein helles Grau. Im dunklen Skin steht dann heller Text auf heller
+   Flaeche, also nichts Lesbares mehr, und zwar ausgerechnet dort, wo jemand
+   gerade gezogen hat. Akzent als Flaeche, die Gegenfarbe als Schrift. */
+::selection { background: var(--accent); color: var(--tool-ink); }
+
 * { box-sizing: border-box; }
 
 html, body {

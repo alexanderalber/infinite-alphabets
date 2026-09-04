@@ -60,6 +60,9 @@ Einzelne Seite als Screenshot ansehen (headless Chrome, ohne npm-Paket):
 node test/shot.js playground.html
 ```
 
+`--js=<ausdruck>` wertet einen Ausdruck auf der fertigen Seite aus und gibt sein Ergebnis
+aus, für Fragen, die kein Bild beantwortet (etwa nach Kontrastwerten).
+
 Sechs Suiten: Grundlagen (Brüche, Intervalle, Parser), Engine (die Tabelle aus dem Plan,
 Produkte, Entscheidungsverfahren), Positionen (Matrizen aus ATVA, Simulation gegen
 Matrixformel auf zufälligen 1-VA), Beispiele (jedes Beispiel gegen seine Sprache, plus
