@@ -99,10 +99,22 @@
     return s;
   }
 
+  // Welcher Automat gerade im SVG steht. Solange es derselbe ist, wird nur die
+  // Token-Ebene bewegt: ein voller Neuaufbau ersetzt jedes Token durch ein
+  // frisches Element ohne Vorzustand, und genau daran ist die Animation aus
+  // PLAN 5.6 bisher gescheitert.
+  let drawnA = null;
+
   function renderGraph() {
     const svg = $('graph');
-    if (!state.A) { while (svg.firstChild) svg.removeChild(svg.firstChild); return; }
+    if (!state.A) {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      drawnA = null;
+      return;
+    }
+    if (drawnA === state.A && D.updateTokens(svg, tokensOf())) return;
     D.render(svg, state.A, { tokens: tokensOf() });
+    drawnA = state.A;
   }
 
   // ---------- Buchstabenknöpfe ----------

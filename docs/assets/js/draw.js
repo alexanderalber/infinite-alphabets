@@ -12,6 +12,11 @@
   const GRID_Y = 110;
   const PAD = 78;   // Platz fuer Selbstschleifen an allen vier Seiten
 
+  // Was zuletzt in ein SVG gezeichnet wurde: die Zustandskoordinaten und das
+  // Token-Layout. updateTokens braucht beides und soll dafuer weder das DOM
+  // zurueckuebersetzen noch eigene Felder an die Elemente haengen.
+  const drawn = new WeakMap();
+
   function el(name, attrs, text) {
     const e = document.createElementNS(NS, name);
     for (const k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) e.setAttribute(k, String(attrs[k]));
@@ -72,7 +77,11 @@
     const gEdges = el('g', { class: 'edges' });
     const gLabels = el('g', { class: 'edge-labels' });
     const gStates = el('g', { class: 'states' });
+    // Die Tokens liegen ueber den Zustaenden, aber nicht *in* ihnen: siehe
+    // paintTokens.
+    const gTokens = el('g', { class: 'tokens' });
     svg.appendChild(gEdges); svg.appendChild(gLabels); svg.appendChild(gStates);
+    svg.appendChild(gTokens);
 
     const groups = groupTransitions(A);
     const pairSeen = new Set();
@@ -120,15 +129,15 @@
           setLabelLines(g, clampSet(txt), R + 16);
         }
       }
-      if (opts.tokens && opts.tokens.has(s)) {
-        drawTokens(g, opts.tokens.get(s));
-      }
       if (opts.onDrag) {
         g.style.cursor = 'grab';
         makeDraggable(g, svg, s, px, opts);
       }
       gStates.appendChild(g);
     }
+
+    drawn.set(svg, { px: px, layout: new Map() });
+    paintTokens(svg, gTokens, opts.tokens, false);
 
     // Die viewBox nach dem tatsächlichen Inhalt richten: Labels und Schleifen sind
     // breiter als das Raster und würden sonst am Rand abgeschnitten.
@@ -210,26 +219,131 @@
     });
   }
 
-  function drawTokens(g, tok) {
-    const items = [];
-    for (const a of (tok.round || [])) items.push({ kind: 'round', letter: a });
-    if (tok.square) items.push({ kind: 'square' });
-    const n = items.length;
-    if (!n) return;
-    const step = 18;
-    const y = R + 20;
-    const x0 = -((n - 1) * step) / 2;
-    items.forEach(function (it, i) {
-      const x = x0 + i * step;
-      const tg = el('g', { class: 'token token-' + it.kind, transform: 'translate(' + x + ',' + y + ')' });
-      if (it.kind === 'round') {
-        tg.appendChild(el('circle', { r: 8 }));
-        tg.appendChild(el('text', { 'text-anchor': 'middle', dy: '0.35em', class: 'token-letter' }, it.letter));
-      } else {
-        tg.appendChild(el('rect', { x: -8, y: -8, width: 16, height: 16, rx: 2 }));
-      }
-      g.appendChild(tg);
+  // ---------- Tokens ----------
+
+  const TOKEN_STEP = 18;   // Abstand zweier Tokens einer Reihe
+  const TOKEN_DY = R + 20; // Reihe unter dem Zustandskreis
+  const TOKEN_R = 8;
+
+  // Der Schluessel macht ein Token ueber das Anhaengen eines Buchstabens hinweg
+  // wiedererkennbar. Ohne ihn ist jedes Token nach dem Zeichnen ein frisches
+  // Element ohne Vorzustand, und die CSS-Transition hat nichts zu interpolieren.
+  // Der Buchstabe leistet das; das eckige Token gibt es genau einmal.
+  function tokenKey(it) { return it.kind === 'round' ? 'r:' + it.letter : 'sq'; }
+
+  // tokens: Map Zustand → {round: [Buchstaben], square: bool}.
+  // Ergebnis: Map Schluessel → {kind, letter, x, y} in absoluten Koordinaten.
+  function tokenLayout(px, tokens) {
+    const out = new Map();
+    if (!tokens) return out;
+    tokens.forEach(function (tok, s) {
+      const p = px[s];
+      if (!p) return;
+      const items = [];
+      for (const a of (tok.round || [])) items.push({ kind: 'round', letter: a });
+      if (tok.square) items.push({ kind: 'square' });
+      const x0 = -((items.length - 1) * TOKEN_STEP) / 2;
+      items.forEach(function (it, i) {
+        out.set(tokenKey(it), {
+          kind: it.kind, letter: it.letter,
+          x: p.x + x0 + i * TOKEN_STEP, y: p.y + TOKEN_DY
+        });
+      });
     });
+    return out;
+  }
+
+  function tokenElement(key, t) {
+    const g = el('g', { class: 'token token-' + t.kind, 'data-token': key });
+    if (t.kind === 'round') {
+      g.appendChild(el('circle', { r: TOKEN_R }));
+      g.appendChild(el('text', { 'text-anchor': 'middle', dy: '0.35em', class: 'token-letter' }, t.letter));
+    } else {
+      g.appendChild(el('rect', { x: -TOKEN_R, y: -TOKEN_R, width: 2 * TOKEN_R, height: 2 * TOKEN_R, rx: 2 }));
+    }
+    return g;
+  }
+
+  function setTokenPos(g, p) {
+    g.setAttribute('transform', 'translate(' + p.x + ',' + p.y + ')');
+  }
+
+  // Ein eben erst eingehaengtes Element hat noch keinen berechneten Stil. Ohne
+  // erzwungene Neuberechnung fasst der Browser Start- und Zielwert zu einem
+  // Schritt zusammen, und die Transition faellt aus.
+  function reflow(g) {
+    if (g.getBoundingClientRect) g.getBoundingClientRect();
+  }
+
+  // Die Tokens sitzen in einer eigenen Ebene mit absoluten Koordinaten, nicht in
+  // der Gruppe ihres Zustands. Nur so ueberlebt ein Token den Wechsel des
+  // Zustands als dasselbe Element, und nur dann interpoliert
+  // .token {transition: transform 400ms} zwischen alter und neuer Stelle
+  // (PLAN 5.6). Preis der eigenen Ebene: ein gezogener Zustand nimmt seine
+  // Tokens nicht mehr mit, sie holen ihn erst beim naechsten updateTokens ein.
+  // Das faellt nicht auf, weil ziehen und Tokens sich bisher ausschliessen: der
+  // Playground zieht, die Positions-Seite zeigt Tokens.
+  function paintTokens(svg, layer, tokens, animate) {
+    const st = drawn.get(svg);
+    if (!st) return false;
+    const want = tokenLayout(st.px, tokens);
+    const have = new Map();
+    for (const ch of Array.from(layer.childNodes)) {
+      const k = ch.getAttribute ? ch.getAttribute('data-token') : null;
+      if (k === null) continue;
+      if (want.has(k)) have.set(k, ch); else layer.removeChild(ch);
+    }
+    want.forEach(function (t, key) {
+      let g = have.get(key);
+      if (!g) {
+        g = tokenElement(key, t);
+        // Ein neuer Buchstabe spaltet sich vom eckigen Token ab: sein Token
+        // startet dort, wo das eckige eben noch stand, und laeuft von da seine
+        // y-Kante entlang. Ohne Vorgaenger gibt es nichts zu zeigen, dann
+        // erscheint es gleich an seinem Platz.
+        const from = (animate && t.kind === 'round') ? st.layout.get('sq') : null;
+        setTokenPos(g, from || t);
+        layer.appendChild(g);
+        if (from) reflow(g);
+      }
+      setTokenPos(g, t);
+    });
+    st.layout = want;
+    return true;
+  }
+
+  // Nur die Transforms aendern, das uebrige Bild stehen lassen. Liefert false,
+  // wenn in dieses SVG noch nie gezeichnet wurde: dann muss der Aufrufer render
+  // rufen.
+  function updateTokens(svg, tokens) {
+    const st = drawn.get(svg);
+    const layer = svg.querySelector ? svg.querySelector('g.tokens') : null;
+    if (!st || !layer) return false;
+    paintTokens(svg, layer, tokens, true);
+    growViewBox(svg, st.layout);
+    return true;
+  }
+
+  // Der Ausschnitt entsteht beim vollen Zeichnen aus dem damaligen Inhalt, und
+  // der kannte nur die damaligen Tokens. Mit jedem Buchstaben wird die Reihe
+  // breiter und kann herauslaufen. Deshalb hier nur wachsen, nie schrumpfen:
+  // ein bei jedem Buchstaben neu gemessener Ausschnitt liesse den Automaten
+  // unter den Tokens zappeln.
+  function growViewBox(svg, layout) {
+    const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+    if (vb.length !== 4 || vb.some(isNaN)) return;
+    let x = vb[0], y = vb[1], x1 = vb[0] + vb[2], y1 = vb[1] + vb[3];
+    const m = TOKEN_R + 4;
+    let changed = false;
+    layout.forEach(function (t) {
+      if (t.x - m < x) { x = t.x - m; changed = true; }
+      if (t.y - m < y) { y = t.y - m; changed = true; }
+      if (t.x + m > x1) { x1 = t.x + m; changed = true; }
+      if (t.y + m > y1) { y1 = t.y + m; changed = true; }
+    });
+    if (!changed) return;
+    svg.setAttribute('viewBox', x + ' ' + y + ' ' + (x1 - x) + ' ' + (y1 - y));
+    clampZoom(svg, x1 - x, y1 - y);
   }
 
   // Selbstschleife oben, unten, links oder rechts, je nachdem wo Platz ist.
@@ -365,7 +479,8 @@
   // fitViewBox gehoert mit nach draussen, damit der Positionsgraph dieselbe
   // Zoomklemmung benutzt und nicht eine zweite mit anderen Grenzen bekommt.
   root.Draw = {
-    render: render, autoLayout: autoLayout, layoutOf: layoutOf, el: el,
+    render: render, updateTokens: updateTokens,
+    autoLayout: autoLayout, layoutOf: layoutOf, el: el,
     fitViewBox: fitViewBox, R: R, GRID_X: GRID_X, GRID_Y: GRID_Y, PAD: PAD
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

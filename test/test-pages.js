@@ -637,6 +637,37 @@ async function main() {
       check('positions: drei runde Tokens', after.round === 3, String(after.round));
       check('positions: angewandte Abbildung angezeigt', /π/.test(after.applied), after.applied);
 
+      // Die Animation haengt daran, dass ein Token beim Anhaengen dasselbe
+      // Element bleibt: nur dann hat die CSS-Transition einen Vorzustand.
+      // Geprueft wird das ueber eine Markierung, die ein Neuaufbau verlieren
+      // wuerde, und darueber, dass die Tokens in ihrer eigenen Ebene liegen
+      // statt in der Gruppe eines Zustands.
+      const kept = await evaluate(`(function(){
+        document.querySelector('#graph .token-square').dataset.mark = 'sq';
+        document.querySelector('#graph .token-round[data-token="r:a"]').dataset.mark = 'a';
+        Array.from(document.getElementById('letterButtons').children)
+          .find(function(x){ return x.textContent === 'a'; }).click();
+        const sq = document.querySelector('#graph .token-square');
+        const ta = document.querySelector('#graph .token-round[data-token="r:a"]');
+        return {
+          word: document.getElementById('wordDisplay').textContent,
+          // Das eckige Token folgt Z, und Z tauscht in V bei jedem Buchstaben
+          // den Zustand: es bewegt sich also sicher, und dann muss eine
+          // laufende Transition an ihm haengen.
+          anim: sq && sq.getAnimations ? sq.getAnimations().length : -1,
+          sq: !!sq && sq.dataset.mark === 'sq',
+          ta: !!ta && ta.dataset.mark === 'a',
+          layer: document.querySelectorAll('#graph > g.tokens > .token').length,
+          inState: document.querySelectorAll('#graph .state .token').length
+        };
+      })()`);
+      check('positions: Wort abacba', /abacba/.test(kept.word), kept.word);
+      check('positions: eckiges Token ueberlebt den Buchstaben', kept.sq, String(kept.sq));
+      check('positions: rundes Token ueberlebt den Buchstaben', kept.ta, String(kept.ta));
+      check('positions: vier Tokens in der Token-Ebene', kept.layer === 4, String(kept.layer));
+      check('positions: kein Token in einer Zustandsgruppe', kept.inState === 0, String(kept.inState));
+      check('positions: Token gleitet, statt zu springen', kept.anim > 0, String(kept.anim));
+
       // Erkundung
       const exp = await evaluate(`(function(){
         document.getElementById('depth').value = '6';
