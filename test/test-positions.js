@@ -145,6 +145,76 @@ for (const [A, exp] of [[dbl, expD], [lastnew, expL]]) {
   H.eq('Zeugenposition stimmt', String(p), String(exp.witness.p));
 }
 
+H.group('Bell-Zahlen');
+H.eq('B₀ bis B₇', String([0, 1, 2, 3, 4, 5, 6, 7].map(P.bell)), '1,1,2,5,15,52,203,877');
+
+H.group('Abbruchgründe sind unterscheidbar');
+const cutDepth = P.explore(V, { maxDepth: 2 });
+H.eq('Tiefengrenze: truncated', String(cutDepth.truncated), 'true');
+H.eq('Tiefengrenze: aber keine Knotengrenze', String(cutDepth.nodeLimit), 'false');
+const cutNodes = P.explore(V, { maxDepth: 12, maxNodes: 5 });
+H.eq('Knotengrenze: nodeLimit', String(cutNodes.nodeLimit), 'true');
+
+H.group('Ebenen (Plan 5.3: abacba und abacbc fallen zusammen)');
+const expV3 = P.explore(V, { maxDepth: 3 });
+const lvV = P.levels(expV3);
+H.eq('Ebene 0 hat eine Position', String(lvV[0].length), '1');
+H.eq('leeres Wort ist e₄', String(lvV[0][0].p), '0,0,0,1,0,0');
+H.eq('Ebenen bis Tiefe 3', String(lvV.length), '4');
+H.check('nie mehr Positionen als Wörter bis auf Umbenennung',
+  lvV.every(function (level, k) { return level.length <= P.bell(k); }),
+  String(lvV.map(function (l) { return l.length; })));
+
+// Die Behauptung der Seite nachrechnen, nicht nur wiederholen: eine
+// Selbstueberdeckung p ⊑ p' muss sich tatsaechlich pumpen lassen, und die als
+// wachsend gemeldeten Koordinaten muessen beim zweiten Durchlauf echt groesser
+// sein als beim ersten.
+H.group('Pumpen: Selbstüberdeckungen sind echt');
+for (const [name, A] of [['V', V], ['VAdouble', dbl], ['VAlastnew', lastnew]]) {
+  const res = P.explore(A, { maxDepth: 5 });
+  const inf = res.info;
+  const pairs = P.coveringPairs(res, { limit: 8 });
+  H.check(name + ': Überdeckung gefunden', pairs.length > 0, String(pairs.length) + ' Paare');
+  for (const pr of pairs) {
+    H.check(name + ': Vorfahr ⊑ Nachfahre', P.leq(pr.ancestor, pr.node),
+      String(pr.ancestor) + ' ⊑ ' + String(pr.node));
+    const once = P.pumpWord(inf, pr, 1);
+    const twice = P.pumpWord(inf, pr, 2);
+    H.check(name + ': Pumpwort existiert', !!once && !!twice, String(once) + ' / ' + String(twice));
+    if (!once || !twice) continue;
+    const p1 = P.positionBySimulation(A, inf, once);
+    const p2 = P.positionBySimulation(A, inf, twice);
+    H.check(name + ': einmal durchlaufen trifft die Position',
+      String(p1) === String(pr.node), String(p1) + ' statt ' + String(pr.node));
+    H.check(name + ': die Folge wächst monoton', P.leq(p1, p2),
+      String(p1) + ' → ' + String(p2));
+
+    // Die gemeldeten Koordinaten muessen wirklich unbeschraenkt sein, die
+    // uebrigen wirklich beschraenkt: nach genuegend Runden duerfen nur noch die
+    // gemeldeten weiterwachsen. R ist mit Abstand groesser als jede
+    // Traegerperiode bei sechs Koordinaten.
+    const R = 24, S = 40;
+    const pR = P.positionBySimulation(A, inf, P.pumpWord(inf, pr, R));
+    const pS = P.positionBySimulation(A, inf, P.pumpWord(inf, pr, S));
+    const grew = [];
+    for (let i = 0; i < pR.length; i++) if (pS[i] > pR[i]) grew.push(i);
+    H.eq(name + ': unbeschränkte Koordinaten stimmen',
+      String(grew), String(pr.unbounded));
+  }
+}
+
+H.group('V bleibt akzeptierend, auch gepumpt');
+{
+  const res = P.explore(V, { maxDepth: 5 });
+  for (const pr of P.coveringPairs(res, { limit: 8 })) {
+    for (let k = 1; k <= 3; k++) {
+      const w = P.pumpWord(res.info, pr, k);
+      H.check('V akzeptiert ' + (w.length ? w.join('') : 'ε'),
+        Au.simulate(V, w).accepted, 'V ist universell (Plan 5.5)');
+    }
+  }
+}
+
 H.group('1-VA-Validierung lehnt Untaugliches ab');
 const notVA = Au.parseDSL('theory reals\nstates q0\ninitial q0\naccepting q0\nq0 -> q0 : x < y');
 H.eq('reelle Theorie abgelehnt', String(P.analyze(notVA).ok), 'false');

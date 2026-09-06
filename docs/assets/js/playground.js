@@ -585,16 +585,9 @@
 
   // ---------- Familien mit Parameter n ----------
 
-  function bellNumber(n) {
-    // Dreieck von Peirce
-    let row = [1];
-    for (let i = 1; i <= n; i++) {
-      const next = [row[row.length - 1]];
-      for (const x of row) next.push(next[next.length - 1] + x);
-      row = next;
-    }
-    return row[0];
-  }
+  // Bell-Zahlen kommen aus positions-core.js, wo die Positions-Seite sie fuer den
+  // Vergleich "Woerter bis auf Umbenennung gegen Positionen" ohnehin braucht.
+  const bellNumber = window.Positions.bell;
 
   $('famN').addEventListener('input', function () { $('famNLabel').textContent = this.value; });
 
@@ -620,6 +613,16 @@
   });
 
   // ---------- Teilen ----------
+
+  // Der gezeichnete Slot wandert als Hash auf die Positions-Seite. Ob er
+  // ueberhaupt ein 1-VA ist, meldet dort die Marke im Editor: das hier ist eine
+  // Uebergabe, keine Pruefung.
+  $('toPositions').addEventListener('click', function () {
+    const dsl = state.which === 'B' ? $('dslB').value : $('dslA').value;
+    window.Share.encode({ a: dsl, b: '', w: $('word').value.trim() }).then(function (hash) {
+      location.href = 'positions.html#' + hash;
+    });
+  });
 
   $('mkLink').addEventListener('click', function () {
     const btn = this;

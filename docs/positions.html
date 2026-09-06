@@ -50,6 +50,14 @@
         <div class="error" id="err"></div>
       </div>
 
+      <div class="panel" data-info="info.pos.share">
+        <h2 data-i18n="pos.share.h">Share</h2>
+        <div class="btn-row">
+          <button data-icon="link" id="mkLink" class="primary" data-i18n="pos.share.link">Create link with automaton and word</button>
+        </div>
+        <p class="hint" id="linkOut"></p>
+      </div>
+
       <div class="panel">
         <details>
           <summary data-i18n="pos.what.h">What a position is</summary>
@@ -94,24 +102,44 @@
         </details>
       </div>
 
-      <div class="panel" data-info="info.pos.explore">
-        <h2 data-i18n="pos.explore.h">Exploration</h2>
-        <div class="field-row">
-          <label><span data-i18n="pos.explore.depth">Depth (word length) ≤</span> <input type="text" id="depth" value="6" style="width:3rem"></label>
-          <button data-icon="play" id="explore" class="primary" data-i18n="pos.explore.start">Start</button>
-        </div>
-        <div id="exploreOut"></div>
-        <div class="pos-table"><table id="posTable"><thead>
-          <tr>
-            <th data-i18n="pos.th.len">Length</th>
-            <th data-i18n="pos.th.pos">Position</th>
-            <th data-i18n="pos.th.word">Word</th>
-            <th data-i18n="pos.th.acc">acc.</th>
-          </tr>
-        </thead><tbody></tbody></table></div>
-      </div>
     </div>
 
+  </div>
+
+  <!-- Die Erkundung steht ueber die volle Breite unter den Spalten: der
+       Positionsgraph hat eine Ebene je Wortlaenge und wird nach rechts breit,
+       nicht nach unten hoch. Dasselbe Muster wie die Sprachkarte im Playground. -->
+  <div class="panel" data-info="info.pos.explore">
+    <h2 data-i18n="pos.explore.h">Exploration</h2>
+    <div class="field-row">
+      <label><span data-i18n="pos.explore.depth">Depth (word length) ≤</span> <input type="text" id="depth" value="6" style="width:3rem"></label>
+      <button data-icon="play" id="explore" class="primary" data-i18n="pos.explore.start">Start</button>
+      <button data-icon="code" id="mkTikz" data-i18n="pos.tikz">TikZ export of the position graph</button>
+    </div>
+    <div id="exploreOut"></div>
+    <div id="pumpOut"></div>
+    <div class="graph-wrap"><svg class="graph" id="posGraph"></svg></div>
+    <p class="hint" id="graphNote"></p>
+    <textarea id="tikzOut" class="small" spellcheck="false" style="display:none" readonly></textarea>
+    <div class="cols-2">
+      <div>
+        <table id="bellTable" class="bell"><thead>
+          <tr>
+            <th data-i18n="pos.th.len">Length</th>
+            <th data-i18n="pos.bell.words">words up to renaming</th>
+            <th data-i18n="pos.bell.pos">new positions</th>
+          </tr>
+        </thead><tbody></tbody></table>
+      </div>
+      <div class="pos-table"><table id="posTable"><thead>
+        <tr>
+          <th data-i18n="pos.th.len">Length</th>
+          <th data-i18n="pos.th.pos">Position</th>
+          <th data-i18n="pos.th.word">Word</th>
+          <th data-i18n="pos.th.acc">acc.</th>
+        </tr>
+      </thead><tbody></tbody></table></div>
+    </div>
   </div>
 </main>
 
@@ -132,6 +160,9 @@
 <script src="assets/js/examples.js"></script>
 <script src="assets/js/positions-core.js"></script>
 <script src="assets/js/draw.js"></script>
+<script src="assets/js/posgraph.js"></script>
+<script src="assets/js/tikz.js"></script>
+<script src="assets/js/share.js"></script>
 <script src="assets/js/positions.js"></script>
 </body>
 </html>

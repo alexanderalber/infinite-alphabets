@@ -10,6 +10,7 @@
   const MATH = [
     ['≤', '\\leq'], ['≥', '\\geq'], ['≠', '\\neq'], ['∧', '\\land'], ['∨', '\\lor'],
     ['¬', '\\lnot'], ['⊤', '\\top'], ['⊥', '\\bot'], ['·', '\\cdot'], ['−', '-'],
+    ['π', '\\pi'],
     ['₀', '_0'], ['₁', '_1'], ['₂', '_2'], ['₃', '_3'], ['₄', '_4'],
     ['₅', '_5'], ['₆', '_6'], ['₇', '_7'], ['₈', '_8'], ['₉', '_9']
   ];
@@ -102,5 +103,49 @@
     return lines.join('\n');
   }
 
-  root.Tikz = { exportTikz: exportTikz, toMath: toMath, nodeId: nodeId };
+  // Der Erreichbarkeitsgraph der Positionen. Das Layout kommt aus PosGraph.layout,
+  // also aus derselben Rechnung wie das Bild auf dem Schirm; hier wird nur in
+  // tikz-Koordinaten umgerechnet (Pixel zu Zentimeter, y nach oben).
+  const POS_MATH = [['●', '\\bullet'], ['■', '\\blacksquare'], [':', '{:}'], [' ', '\\;']];
+
+  function posMath(label) {
+    let s = toMath(label);
+    for (const [u, l] of POS_MATH) s = s.split(u).join(l);
+    return s;
+  }
+
+  function exportPositionGraph(res, L, opts) {
+    opts = opts || {};
+    const px = opts.unit === undefined ? 62 : opts.unit; // Pixel je Zentimeter
+    const lines = [];
+    lines.push('% ' + (opts.title || 'Positionsgraph') + ', erzeugt von infinite-alphabets');
+    lines.push('\\begin{tikzpicture}[->, >=stealth\', auto, semithick]');
+    lines.push('\\tikzstyle{pos}=[draw=black,thick,rounded corners=2pt,inner sep=3pt,fill=white]');
+
+    for (const it of L.nodes) {
+      const acc = root.Positions.isAccepting(res.info, it.node.p);
+      const x = (it.x / px).toFixed(2);
+      const y = (-it.y / px).toFixed(2);
+      lines.push('\\node[pos' + (acc ? '' : ',double,fill=red!20') + '] (' + nodeId(it.key) +
+        ') at (' + x + ',' + y + ') {$' + posMath(it.label) + '$};');
+    }
+
+    lines.push('\\path');
+    for (const e of L.edges) {
+      const label = e.vias.map(function (v) { return toMath(root.PosGraph.viaLabel(v)); }).join(', ');
+      if (e.from === e.to) {
+        lines.push('(' + nodeId(e.from) + ') edge[loop right] node{$' + label + '$} ()');
+      } else {
+        lines.push('(' + nodeId(e.from) + ') edge node{$' + label + '$} (' + nodeId(e.to) + ')');
+      }
+    }
+    lines.push(';');
+    lines.push('\\end{tikzpicture}');
+    return lines.join('\n');
+  }
+
+  root.Tikz = {
+    exportTikz: exportTikz, exportPositionGraph: exportPositionGraph,
+    toMath: toMath, posMath: posMath, nodeId: nodeId
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

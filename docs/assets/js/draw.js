@@ -362,5 +362,10 @@
     return m ? pt.matrixTransform(m.inverse()) : { x: ev.clientX, y: ev.clientY };
   }
 
-  root.Draw = { render: render, autoLayout: autoLayout, layoutOf: layoutOf, el: el, R: R, GRID_X: GRID_X, GRID_Y: GRID_Y, PAD: PAD };
+  // fitViewBox gehoert mit nach draussen, damit der Positionsgraph dieselbe
+  // Zoomklemmung benutzt und nicht eine zweite mit anderen Grenzen bekommt.
+  root.Draw = {
+    render: render, autoLayout: autoLayout, layoutOf: layoutOf, el: el,
+    fitViewBox: fitViewBox, R: R, GRID_X: GRID_X, GRID_Y: GRID_Y, PAD: PAD
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

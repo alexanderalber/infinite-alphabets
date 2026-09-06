@@ -643,11 +643,39 @@ async function main() {
         document.getElementById('explore').click();
         return {
           out: document.getElementById('exploreOut').textContent,
-          rows: document.querySelectorAll('#posTable tbody tr').length
+          rows: document.querySelectorAll('#posTable tbody tr').length,
+          pump: document.getElementById('pumpOut').textContent,
+          bell: Array.from(document.querySelectorAll('#bellTable tbody tr')).map(function(tr){
+            return Array.from(tr.children).map(function(td){ return td.textContent; }).join('|');
+          }),
+          nodes: document.querySelectorAll('#posGraph .pg-node').length,
+          note: document.getElementById('graphNote').textContent
         };
       })()`);
       check('positions: Erkundung liefert Positionen', exp.rows > 3, String(exp.rows));
       check('positions: V ohne Gegenbeispiel', /keine nicht-akzeptierende Position/.test(exp.out), exp.out.slice(0, 160));
+      check('positions: Pumpzeile nennt eine Koordinate', /q/.test(exp.pump), exp.pump.slice(0, 160));
+      check('positions: Bell-Tabelle beginnt mit 0|1|1', exp.bell[0] === '0|1|1', String(exp.bell[0]));
+      check('positions: Bell-Zahl bei Länge 4 ist 15', /^4\|15\|/.test(exp.bell[4] || ''), String(exp.bell[4]));
+      // Entweder gezeichnet oder mit Begruendung nicht gezeichnet, nie beides leer.
+      check('positions: Graph gezeichnet oder erklärt', exp.nodes > 0 || /\d/.test(exp.note),
+        exp.nodes + ' Knoten, Hinweis: ' + exp.note.slice(0, 80));
+
+      // Flach erkunden, damit der Graph sicher gezeichnet ist: der Export gibt
+      // aus, was auf dem Schirm steht, und oberhalb der Knotengrenze steht dort
+      // absichtlich nichts.
+      const tikz = await evaluate(`(function(){
+        document.getElementById('depth').value = '3';
+        document.getElementById('explore').click();
+        document.getElementById('mkTikz').click();
+        return {
+          src: document.getElementById('tikzOut').value,
+          nodes: document.querySelectorAll('#posGraph .pg-node').length
+        };
+      })()`);
+      check('positions: flacher Graph wird gezeichnet', tikz.nodes > 1, String(tikz.nodes));
+      check('positions: TikZ-Export des Positionsgraphen',
+        /\\begin\{tikzpicture\}/.test(tikz.src) && /\\pi/.test(tikz.src), tikz.src.slice(0, 120));
 
       const dbl = await evaluate(`(function(){
         document.getElementById('dsl').value = Examples.byId('VAdouble').dsl;

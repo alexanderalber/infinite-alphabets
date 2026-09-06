@@ -197,6 +197,18 @@ async function main() {
       awaitPromise: true
     }, sid);
     await wait(1200);
+  } else if (process.argv.some(function (a) { return a === '--explore'; })) {
+    // Das Erkundungs-Panel der Positions-Seite mit allem, was es zeigen kann:
+    // Positionsgraph, Pumpzeile, Bell-Vergleich. VAdouble, weil dort auch ein
+    // Gegenbeispiel dabei ist.
+    await send('Runtime.evaluate', {
+      expression: "(function(){var d=document.getElementById('dsl');"
+        + "d.value=Examples.byId('VAdouble').dsl;d.dispatchEvent(new Event('input'));"
+        + "document.getElementById('depth').value='4';"
+        + "document.getElementById('explore').click();})()",
+      awaitPromise: true
+    }, sid);
+    await wait(800);
   } else if (process.argv.some(function (a) { return a === '--info'; })) {
     await send('Runtime.evaluate', {
       expression: "document.querySelectorAll('.info-btn')[4].click()", awaitPromise: true

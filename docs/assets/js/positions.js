@@ -6,6 +6,7 @@
   const Ex = window.Examples;
   const P = window.Positions;
   const D = window.Draw;
+  const PG = window.PosGraph;
   const Fo = window.Formula;
   const T = function () { return window.I18n; };
 
@@ -149,6 +150,13 @@
   const SUP = { '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '0': '⁰' };
   function sup(n) { return String(n).split('').map(function (c) { return SUP[c] || c; }).join(''); }
 
+  // Ein Wort aus Tabelle, Graph, Zeuge oder Pump-Zeuge in die Animation laden.
+  function loadWord(w) {
+    state.word = w.slice();
+    state.lastApplied = '';
+    renderAll();
+  }
+
   $('undo').addEventListener('click', function () {
     if (!state.word.length) return;
     state.word.pop();
@@ -237,10 +245,26 @@
 
   // ---------- Erkundung ----------
 
+  // Ergebnis der letzten Erkundung, fuer den TikZ-Export aufgehoben.
+  let lastExplore = null;
+  let lastLayout = null;
+
+  function clearExplore() {
+    $('exploreOut').innerHTML = '';
+    $('pumpOut').innerHTML = '';
+    $('graphNote').textContent = '';
+    $('bellTable').querySelector('tbody').innerHTML = '';
+    $('posTable').querySelector('tbody').innerHTML = '';
+    const svg = $('posGraph');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    $('tikzOut').style.display = 'none';
+    lastExplore = null; lastLayout = null;
+  }
+
   $('explore').addEventListener('click', function () {
     const out = $('exploreOut');
     const tbody = $('posTable').querySelector('tbody');
-    out.innerHTML = ''; tbody.innerHTML = '';
+    clearExplore();
     if (!state.A) { out.innerHTML = '<div class="result-line">' + T().t('pos.explore.noVA') + '</div>'; return; }
     const d = parseInt($('depth').value, 10);
     const res = P.explore(state.A, { maxDepth: isNaN(d) ? 6 : d, maxNodes: 3000 });
@@ -258,12 +282,13 @@
         esc(w.word.length ? w.word.join('') : 'ε') + '</span>' +
         esc(T().f('pos.explore.withPos', P.formatPosition(res.info, w.p))) + '</div>';
       const lnk = $('wlink');
-      if (lnk) lnk.addEventListener('click', function () {
-        state.word = w.word.slice();
-        state.lastApplied = '';
-        renderAll();
-      });
+      if (lnk) lnk.addEventListener('click', function () { loadWord(w.word); });
     }
+
+    lastExplore = res;
+    renderPump(res);
+    renderBell(res);
+    renderGraphPanel(res);
 
     const nodes = res.nodes.slice().sort(function (a, b) { return a.depth - b.depth; });
     for (const nd of nodes.slice(0, 300)) {
@@ -275,11 +300,7 @@
         '<td>' + (acc ? '✓' : '✗') + '</td>';
       tr.className = 'is-clickable';
       if (!acc) tr.style.background = 'var(--tool-danger-bg)';
-      tr.addEventListener('click', function () {
-        state.word = nd.word.slice();
-        state.lastApplied = '';
-        renderAll();
-      });
+      tr.addEventListener('click', function () { loadWord(nd.word); });
       tbody.appendChild(tr);
     }
     if (nodes.length > 300) {
@@ -287,6 +308,127 @@
       tr.innerHTML = '<td colspan="4" class="hint">' + T().f('pos.explore.more', nodes.length - 300) + '</td>';
       tbody.appendChild(tr);
     }
+  });
+
+  // ---------- Pumpen, Bell-Kollaps, Graph ----------
+
+  let lastPump = null;
+
+  // Ein Wort als anklickbaren Zeugen-Link, wie beim Gegenbeispiel.
+  function wordLink(w) {
+    const s = document.createElement('span');
+    s.className = 'witness-link';
+    s.textContent = w.length ? w.join('') : 'ε';
+    s.addEventListener('click', function () { loadWord(w); });
+    return s;
+  }
+
+  // Selbstueberdeckung p ⊑ p': die Abbildungsfolge dazwischen laesst sich wegen
+  // der Monotonie der Nachfolger beliebig wiederholen, die echt gewachsenen
+  // Koordinaten wachsen dabei ueber jede Schranke. Exakt, keine Schranke noetig.
+  function renderPump(res) {
+    const box = $('pumpOut');
+    box.innerHTML = '';
+    lastPump = null;
+    const pairs = P.coveringPairs(res, { limit: 60 });
+    if (!pairs.length) return;
+    // Das lehrreichste Paar ist das mit der kuerzesten Schleife, dann dem kuerzesten Vorlauf.
+    pairs.sort(function (a, b) { return (a.v.length - b.v.length) || (a.u.length - b.u.length); });
+    const pr = pairs[0];
+    lastPump = pr;
+
+    // Nicht die Koordinaten, in denen der Nachfahre gerade groesser ist: der
+    // lineare Anteil der Schleife schiebt den Zuwachs weiter. Gemeldet wird,
+    // was wirklich unbeschraenkt waechst (siehe unboundedCoords).
+    const names = pr.unbounded
+      .filter(function (i) { return i < res.info.n; })
+      .map(function (i) { return Au.displayState(res.info.states[i]); });
+    if (!names.length) return; // kann nicht eintreten: die untere Haelfte traegt genau eine 1
+
+    const line = document.createElement('div');
+    line.className = 'result-line';
+    line.innerHTML = '<span class="tag">' + T().t('pos.pump.tag') + '</span> ' +
+      T().f('pos.pump.text', esc(names.join(', ')),
+        esc(pr.maps.map(PG.viaLabel).join(' '))) + ' ';
+    line.appendChild(wordLink(pr.u));
+    line.appendChild(document.createTextNode(' · ('));
+    line.appendChild(wordLink(pr.v));
+    line.appendChild(document.createTextNode(')ᵏ, '));
+    const pumped = P.pumpWord(res.info, pr, 2);
+    if (pumped) {
+      line.appendChild(document.createTextNode(T().t('pos.pump.twice') + ' '));
+      line.appendChild(wordLink(pumped));
+      const p2 = P.positionBySimulation(state.A, res.info, pumped);
+      line.appendChild(document.createTextNode(
+        ' ' + T().f('pos.pump.pos', P.formatPosition(res.info, p2))));
+    }
+    box.appendChild(line);
+  }
+
+  // Wie stark die Abstraktion zusammenfasst: B_k Woerter der Laenge k bis auf
+  // Umbenennung, aber nur so viele neue Positionen.
+  function renderBell(res) {
+    const tbody = $('bellTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    const lv = P.levels(res);
+    lv.forEach(function (level, k) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + k + '</td><td class="mono">' + P.bell(k) +
+        '</td><td class="mono">' + level.length + '</td>';
+      tbody.appendChild(tr);
+    });
+    // An der Tiefengrenze ist die letzte Zeile vollstaendig, an der Knotengrenze
+    // nicht. Der Unterschied gehoert unter die Tabelle, sonst liest sich eine
+    // abgeschnittene Zahl wie ein Ergebnis.
+    if (res.nodeLimit || res.truncated) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="3" class="hint">' +
+        T().t(res.nodeLimit ? 'pos.bell.nodeLimit' : 'pos.bell.truncated') + '</td>';
+      tbody.appendChild(tr);
+    }
+  }
+
+  function renderGraphPanel(res) {
+    const svg = $('posGraph');
+    const note = $('graphNote');
+    note.textContent = '';
+    const hl = new Set(lastPump ? lastPump.path : []);
+    lastLayout = PG.render(svg, res, {
+      onPick: function (nd) { loadWord(nd.word); },
+      highlight: hl
+    });
+    if (!lastLayout) note.textContent = T().f('pos.graph.tooBig', res.nodes.length, PG.MAX_NODES);
+  }
+
+  // ---------- Teilen und Export ----------
+
+  $('mkTikz').addEventListener('click', function () {
+    const box = $('tikzOut');
+    if (!lastExplore || !lastLayout) {
+      box.value = T().t('pos.tikz.none');
+    } else {
+      box.value = window.Tikz.exportPositionGraph(lastExplore, lastLayout, {
+        title: T().t('pos.tikz.title')
+      });
+    }
+    box.style.display = '';
+    box.select();
+  });
+
+  $('mkLink').addEventListener('click', function () {
+    const btn = this;
+    // Mit Leerzeichen verbunden, damit parseWord auch mehrstellige Buchstaben
+    // (a1, a2, ab Buchstabe 27) wieder richtig trennt.
+    window.Share.encode({ a: $('dsl').value, b: '', w: state.word.join(' ') })
+      .then(function (hash) {
+        const url = location.origin + location.pathname + '#' + hash;
+        history.replaceState(null, '', '#' + hash);
+        $('linkOut').textContent = url;
+        if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () {
+          btn.textContent = T().t('pos.share.copied');
+          setTimeout(function () { btn.textContent = T().t('pos.share.link'); }, 1500);
+        }, function () { /* ohne Zwischenablage bleibt der Text stehen */ });
+      });
   });
 
   // ---------- Rendern ----------
@@ -314,12 +456,34 @@
     sel.innerHTML = '';
     fillExamples();
     sel.value = cur;
-    $('exploreOut').innerHTML = '';
-    $('posTable').querySelector('tbody').innerHTML = '';
+    clearExplore();
     reload();
   };
 
-  $('dsl').value = Ex.byId('V').dsl;
-  sel.value = 'V';
-  reload();
+  // Startbefuellung nur auf einer unberuehrten Seite: Share.decode ist async,
+  // laeuft also fruehestens einen Microtask spaeter, bei gepacktem Hash sogar
+  // erst nach dem DecompressionStream. Wer bis dahin schon getippt hat, bekaeme
+  // seine Eingabe sonst von der Vorgabe wieder ueberschrieben (derselbe Waechter
+  // wie in playground.js).
+  let touched = false;
+  $('dsl').addEventListener('input', function () { touched = true; });
+
+  function fillDefault() {
+    if (touched) return;
+    $('dsl').value = Ex.byId('V').dsl;
+    sel.value = 'V';
+    reload();
+  }
+
+  if (window.Share && location.hash) {
+    window.Share.decode(location.hash).then(function (fields) {
+      if (!fields || touched) { fillDefault(); return; }
+      $('dsl').value = fields.a;
+      sel.value = '';
+      reload();
+      if (fields.w && state.A) loadWord(Au.parseWord(state.A, fields.w));
+    }, fillDefault);
+  } else {
+    fillDefault();
+  }
 })(globalThis);
