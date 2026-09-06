@@ -612,8 +612,14 @@ svg.graph .pg-label { font-size: 12px; fill: var(--tool-emph); font-family: var(
    erschlagen die Kaesten und die Tabelle; im grauen Skin faellt das nicht auf,
    weil dort die Seitenfarbe in der Mitte liegt. Ein Mittelton stellt denselben
    Eindruck in allen drei Skins her, ohne die Zeichen zaehlbar zu machen. */
-svg.graph .pg-tok { fill: var(--tool-label); }
-.tok { color: var(--tool-label); }
+svg.graph .pg-tok { fill: var(--token); }
+.tok { color: var(--token); }
+/* Eine eigene Rolle statt einer Stufe der Leiter, weil dieselbe Stufe hier
+   nicht denselben Eindruck macht: dunkel auf hell wirkt schwerer als hell auf
+   dunkel, --tool-label steht in Hell noch als Schwarz im Bild. Hell geht
+   deshalb eine Stufe weiter herunter, Dunkel und Grau bleiben. */
+:root { --token: var(--tool-label); }
+html[data-theme="light"] { --token: var(--tool-note); }
 svg.graph .pg-node.is-clickable { cursor: pointer; }
 svg.graph .pg-node.is-clickable:hover .pg-box { stroke: var(--accent); stroke-width: 2.2; }
 svg.graph .pg-edge { fill: none; stroke: var(--edge); stroke-width: 1.2; }
