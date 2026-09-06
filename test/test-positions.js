@@ -231,7 +231,8 @@ H.group('Positionsgraph — wo eine Kante ansetzt');
   H.eq('Querkante startet an der linken Kante', r1(quer.s.x), r1(77.2 - 46));
   H.eq('Querkante endet an der rechten Kante des Ziels', r1(quer.e.x), r1(-58.2 + 69 + 3));
   H.check('Querkante ist gebogen', quer.d.indexOf('Q') > 0, quer.d);
-  H.check('Bogen der Querkante geht nach oben', quer.label.y < 186, String(quer.label.y));
+  // Nach unten, weil die geraden Kanten von oben in denselben Korridor laufen.
+  H.check('Bogen der Querkante geht nach unten', quer.label.y > 186, String(quer.label.y));
 
   const runter = PG.edgeGeometry(oben, links);
   H.eq('Kante nach unten startet an der Unterkante', r1(runter.s.y), r1(108 + PG.BOX_H / 2));

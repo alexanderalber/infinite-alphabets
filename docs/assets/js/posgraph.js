@@ -85,13 +85,19 @@
     const L = layout(res);
     const hl = opts.highlight || new Set();
 
+    // Zwei Marker, weil ein Marker die Farbe seiner Kante nicht erbt: sonst
+    // haengt an der hervorgehobenen Schleife ein Kopf in Kantengrau, waehrend
+    // der Strich im Akzent laeuft. Dieselbe Loesung wie arrow/arrow-hot in
+    // draw.js.
     const defs = el('defs');
-    const marker = el('marker', {
-      id: 'pg-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5,
-      markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse'
-    });
-    marker.appendChild(el('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: 'var(--edge)' }));
-    defs.appendChild(marker);
+    for (const [id, color] of [['pg-arrow', 'var(--edge)'], ['pg-arrow-hot', 'var(--accent)']]) {
+      const marker = el('marker', {
+        id: id, viewBox: '0 0 10 10', refX: 9, refY: 5,
+        markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse'
+      });
+      marker.appendChild(el('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: color }));
+      defs.appendChild(marker);
+    }
     svg.appendChild(defs);
 
     const gEdges = el('g', { class: 'pg-edges' });
@@ -136,17 +142,20 @@
 
   function drawEdge(el, gEdges, gLabels, a, b, label, hot) {
     const cls = 'pg-edge' + (hot ? ' hot' : '');
+    const head = 'url(#' + (hot ? 'pg-arrow-hot' : 'pg-arrow') + ')';
     if (a === b) {
       // Selbstschleife rechts neben dem Kasten.
       const x = a.x + a.w / 2, y = a.y;
       const d = 'M ' + x + ' ' + (y - 8) + ' C ' + (x + 34) + ' ' + (y - 26) + ' ' +
         (x + 34) + ' ' + (y + 26) + ' ' + x + ' ' + (y + 8);
-      gEdges.appendChild(el('path', { d: d, class: cls, 'marker-end': 'url(#pg-arrow)' }));
-      gLabels.appendChild(el('text', { x: x + 38, y: y + 4, class: 'pg-edge-label' }, label));
+      gEdges.appendChild(el('path', { d: d, class: cls, 'marker-end': head }));
+      // Die Schleife reicht nach rechts bis etwa x + 26, die Beschriftung steht
+      // knapp dahinter statt in der Luft daneben.
+      gLabels.appendChild(el('text', { x: x + 30, y: y + 4, class: 'pg-edge-label' }, label));
       return;
     }
     const g = edgeGeometry(a, b);
-    gEdges.appendChild(el('path', { d: g.d, class: cls, 'marker-end': 'url(#pg-arrow)' }));
+    gEdges.appendChild(el('path', { d: g.d, class: cls, 'marker-end': head }));
     gLabels.appendChild(el('text', {
       x: g.label.x, y: g.label.y, 'text-anchor': g.label.anchor, class: 'pg-edge-label'
     }, label));
@@ -165,13 +174,14 @@
     const e = borderPoint(b, a.x, a.y, 3);   // Platz fuer die Pfeilspitze
     const dx = e.x - s.x, dy = e.y - s.y;
     const len = Math.hypot(dx, dy) || 1;
-    const nx = -dy / len, ny = dx / len;
+    const nx = dy / len, ny = -dx / len;   // links der Laufrichtung
     // Rueck- und Querkanten biegen, damit sie nicht durch die Kaesten dazwischen
     // laufen. Der Versatz steht senkrecht auf der Verbindung, nicht in
     // x-Richtung: bei einer Kante innerhalb einer Ebene laege ein x-versetzter
     // Kontrollpunkt genau auf der Geraden, das gaebe keinen Bogen, sondern eine
-    // schiefe Linie. Gebogen wird immer nach rechts der Laufrichtung, bei den
-    // Querkanten nach links ist das oben. Das Mass ist der Abstand der
+    // schiefe Linie. Gebogen wird nach links der Laufrichtung, also von den
+    // geraden Kanten weg: die laufen alle nach unten, und eine Querkante laeuft
+    // zurueck nach links, links davon ist unten. Das Mass ist der Abstand der
     // Ansatzpunkte, nicht der der Mittelpunkte: zwei Kaesten derselben Ebene
     // stehen mit ihren Raendern nur wenige Pixel auseinander, ein fester
     // Versatz liesse die Kante ueber ihren eigenen Kasten zurueckschwingen.
@@ -179,13 +189,12 @@
     const mx = (s.x + e.x) / 2 + nx * bend;
     const my = (s.y + e.y) / 2 + ny * bend;
     // Beschriftung an der Mitte des tatsaechlichen Pfades, seitlich weggerueckt.
-    // Beim Bogen nach aussen und zentriert: eine Querkante hat zwischen ihren
-    // Kaesten nur wenige Pixel Platz, linksbuendig stiesse die Beschriftung an
-    // den Kasten, von dem sie ausgeht. Die Gerade behaelt die Beschriftung
-    // rechts der Laufrichtung, also neben der Linie statt darauf.
+    // Beides links der Laufrichtung, beim Bogen also aussen hinter ihm und
+    // zentriert: eine Querkante hat zwischen ihren Kaesten nur wenige Pixel
+    // Platz, und die Seite zu den geraden Kanten hin ist die belegte.
     const cx = bend ? 0.25 * s.x + 0.5 * mx + 0.25 * e.x : (s.x + e.x) / 2;
     const cy = bend ? 0.25 * s.y + 0.5 * my + 0.25 * e.y : (s.y + e.y) / 2;
-    const off = bend ? 12 : -10;
+    const off = bend ? 8 : 6;
     return {
       s: s, e: e, bend: bend,
       d: bend
