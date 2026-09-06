@@ -190,6 +190,15 @@ H.check('TikZ: schwach gestrichelt', /dashed/.test(Tz.exportTikz(Au.parseDSL(Ex.
 const tzp = Tz.exportTikz(Au.parseDSL(Ex.byId('A2pB').dsl));
 H.check('TikZ: Tupelnamen bereinigt', /\(n_q0_r0_\)/.test(tzp), tzp.slice(0, 400));
 H.check('TikZ: Tupel im Label mit Indizes', /\$\(q_0,r_0\)\$/.test(tzp), tzp.slice(0, 400));
+// Zweistellige Indizes brauchen Klammern: y_1_0 waere in LaTeX ein doppeltes
+// Subskript und damit ein Fehler, kein bloss haessliches Bild.
+H.eq('TikZ: einstelliger Index ohne Klammern', Tz.toMath('y₁'), 'y_1');
+H.eq('TikZ: zweistelliger Index mit Klammern', Tz.toMath('y₁₀'), 'y_{10}');
+H.eq('TikZ: Index im Positionslabel', Tz.posMath('q₁₂:●'), 'q_{12}{:}\\bullet');
+// Der Stilname des Positionsgraphen darf den eingebauten Schluessel 'pos' nicht
+// ueberdecken, sonst verlieren die Kaesten Rahmen und Fuellung.
+H.check('TikZ: Positionsstil heisst nicht pos',
+  !/\\tikzstyle\{pos\}|node\[pos[,\]]/.test(Tz.exportPositionGraph.toString()));
 
 
 process.exit(H.report());

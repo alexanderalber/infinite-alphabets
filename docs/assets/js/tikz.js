@@ -10,13 +10,22 @@
   const MATH = [
     ['≤', '\\leq'], ['≥', '\\geq'], ['≠', '\\neq'], ['∧', '\\land'], ['∨', '\\lor'],
     ['¬', '\\lnot'], ['⊤', '\\top'], ['⊥', '\\bot'], ['·', '\\cdot'], ['−', '-'],
-    ['π', '\\pi'],
-    ['₀', '_0'], ['₁', '_1'], ['₂', '_2'], ['₃', '_3'], ['₄', '_4'],
-    ['₅', '_5'], ['₆', '_6'], ['₇', '_7'], ['₈', '_8'], ['₉', '_9']
+    ['π', '\\pi']
   ];
 
+  // Subskripte werden pro Lauf umgesetzt, nicht pro Ziffer: y₁₀ ist ein Index 10,
+  // und y_1_0 waere in LaTeX ein doppeltes Subskript, also ein Fehler. Ab zwei
+  // Ziffern braucht der Index deshalb Klammern.
+  const SUBDIGITS = '₀₁₂₃₄₅₆₇₈₉';
+  function subscripts(s) {
+    return String(s).replace(/[₀₁₂₃₄₅₆₇₈₉]+/g, function (run) {
+      const d = run.split('').map(function (c) { return SUBDIGITS.indexOf(c); }).join('');
+      return d.length === 1 ? '_' + d : '_{' + d + '}';
+    });
+  }
+
   function toMath(s) {
-    let out = String(s);
+    let out = subscripts(s);
     for (const [u, l] of MATH) out = out.split(u).join(l);
     return out;
   }
@@ -69,7 +78,10 @@
       lines.push('\\node[' + opt.join(',') + '] (' + nodeId(q) + ') at (' + x + ',' + y + ') {$' + stateMath(q) + '$};');
     }
 
-    lines.push('\\path');
+    // Die Kanten sammeln sich erst in einem eigenen Block: das abschliessende
+    // Semikolon gehoert an die letzte Kantenzeile, und ohne Kanten faellt das
+    // \path ganz weg statt als leerer Pfad dazustehen.
+    const path = [];
     const groups = new Map();
     for (const t of A.transitions) {
       const k = t.from + ' ' + t.to;
@@ -87,18 +99,22 @@
     for (const from of A.states) {
       const gs = byFrom.get(from);
       if (!gs) continue;
-      lines.push('(' + nodeId(from) + ')');
+      path.push('(' + nodeId(from) + ')');
       for (const g of gs) {
         const label = g.asts.map(function (a) { return '$' + toMath(Au.displayFormula(A, a)) + '$'; }).join(', ');
         if (g.from === g.to) {
-          lines.push('    edge[loop ' + loopDir(pos, g.from) + '] node{' + label + '} ()');
+          path.push('    edge[loop ' + loopDir(pos, g.from) + '] node{' + label + '} ()');
         } else {
           const back = pairs.has(g.to + ' ' + g.from);
-          lines.push('    edge' + (back ? '[bend left]' : '') + ' node{' + label + '} (' + nodeId(g.to) + ')');
+          path.push('    edge' + (back ? '[bend left]' : '') + ' node{' + label + '} (' + nodeId(g.to) + ')');
         }
       }
     }
-    lines.push(';');
+    if (path.length) {
+      path[path.length - 1] += ';';
+      lines.push('\\path');
+      for (const p of path) lines.push(p);
+    }
     lines.push('\\end{tikzpicture}');
     return lines.join('\n');
   }
@@ -120,26 +136,34 @@
     const lines = [];
     lines.push('% ' + (opts.title || 'Positionsgraph') + ', erzeugt von infinite-alphabets');
     lines.push('\\begin{tikzpicture}[->, >=stealth\', auto, semithick]');
-    lines.push('\\tikzstyle{pos}=[draw=black,thick,rounded corners=2pt,inner sep=3pt,fill=white]');
+    // Der Stilname darf nicht 'pos' sein: das ist ein eingebauter tikz-Schluessel
+    // (Lage eines Knotens auf einem Pfad), der einen Wert verlangt. Ein Knoten mit
+    // dem Schluessel ohne Wert laeuft in einen pgfkeys-Fehler, verliert Rahmen und
+    // Fuellung, und die Kaesten fehlen im fertigen Bild.
+    lines.push('\\tikzstyle{posnode}=[draw=black,thick,rounded corners=2pt,inner sep=3pt,fill=white]');
 
     for (const it of L.nodes) {
       const acc = root.Positions.isAccepting(res.info, it.node.p);
       const x = (it.x / px).toFixed(2);
       const y = (-it.y / px).toFixed(2);
-      lines.push('\\node[pos' + (acc ? '' : ',double,fill=red!20') + '] (' + nodeId(it.key) +
+      lines.push('\\node[posnode' + (acc ? '' : ',double,fill=red!20') + '] (' + nodeId(it.key) +
         ') at (' + x + ',' + y + ') {$' + posMath(it.label) + '$};');
     }
 
-    lines.push('\\path');
+    const path = [];
     for (const e of L.edges) {
       const label = e.vias.map(function (v) { return toMath(root.PosGraph.viaLabel(v)); }).join(', ');
       if (e.from === e.to) {
-        lines.push('(' + nodeId(e.from) + ') edge[loop right] node{$' + label + '$} ()');
+        path.push('(' + nodeId(e.from) + ') edge[loop right] node{$' + label + '$} ()');
       } else {
-        lines.push('(' + nodeId(e.from) + ') edge node{$' + label + '$} (' + nodeId(e.to) + ')');
+        path.push('(' + nodeId(e.from) + ') edge node{$' + label + '$} (' + nodeId(e.to) + ')');
       }
     }
-    lines.push(';');
+    if (path.length) {
+      path[path.length - 1] += ';';
+      lines.push('\\path');
+      for (const p of path) lines.push(p);
+    }
     lines.push('\\end{tikzpicture}');
     return lines.join('\n');
   }
