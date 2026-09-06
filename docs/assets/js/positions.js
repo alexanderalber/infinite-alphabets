@@ -194,7 +194,7 @@
     const lower = p.slice(n).join(', ');
     box.innerHTML = '(<span class="upper">' + upper + '</span> | <span class="lower">' + lower + '</span>)' +
       '<div class="hint">' + T().t('pos.vec.legend') + '</div>' +
-      '<div class="hint">' + esc(P.formatPosition(state.info, p)) + '</div>';
+      '<div class="hint">' + posHtml(P.formatPosition(state.info, p)) + '</div>';
     applied.textContent = state.lastApplied;
     const acc = P.isAccepting(state.info, p);
     verdict.innerHTML = '<div class="verdict ' + (acc ? 'acc' : 'none') + '">' +
@@ -292,7 +292,7 @@
       out.innerHTML = '<div class="result-line">' + tag +
         T().t('pos.explore.witness') + '<span class="witness-link" id="wlink">' +
         esc(w.word.length ? w.word.join('') : 'ε') + '</span>' +
-        esc(T().f('pos.explore.withPos', P.formatPosition(res.info, w.p))) + '</div>';
+        posHtml(T().f('pos.explore.withPos', P.formatPosition(res.info, w.p))) + '</div>';
       const lnk = $('wlink');
       if (lnk) lnk.addEventListener('click', function () { loadWord(w.word); });
     }
@@ -307,7 +307,7 @@
       const tr = document.createElement('tr');
       const acc = P.isAccepting(res.info, nd.p);
       tr.innerHTML = '<td>' + nd.depth + '</td>' +
-        '<td class="mono">' + esc(P.formatPosition(res.info, nd.p)) + '</td>' +
+        '<td class="mono">' + posHtml(P.formatPosition(res.info, nd.p)) + '</td>' +
         '<td class="mono">' + esc(nd.word.length ? nd.word.join('') : 'ε') + '</td>' +
         '<td>' + (acc ? '✓' : '✗') + '</td>';
       tr.className = 'is-clickable';
@@ -371,8 +371,9 @@
       line.appendChild(document.createTextNode(T().t('pos.pump.twice') + ' '));
       line.appendChild(wordLink(pumped));
       const p2 = P.positionBySimulation(state.A, res.info, pumped);
-      line.appendChild(document.createTextNode(
-        ' ' + T().f('pos.pump.pos', P.formatPosition(res.info, p2))));
+      const posSpan = document.createElement('span');
+      posSpan.innerHTML = ' ' + posHtml(T().f('pos.pump.pos', P.formatPosition(res.info, p2)));
+      line.appendChild(posSpan);
     }
     box.appendChild(line);
   }
@@ -450,6 +451,14 @@
     renderButtons();
     renderVector();
     renderWord();
+  }
+
+  // Eine Positionszeile als HTML: die Tokenzeichen ● und ■ kommen in ein <span>,
+  // damit sie matter stehen koennen als der Text drumherum. Sonst waeren sie in
+  // Hell volles Schwarz und in Dunkel volles Weiss, also das Auffaelligste auf
+  // der Seite, obwohl sie nur eine Anzahl sind.
+  function posHtml(s) {
+    return esc(s).replace(/[●■]+/g, function (m) { return '<span class="tok">' + m + '</span>'; });
   }
 
   function esc(s) {

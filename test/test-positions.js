@@ -246,6 +246,15 @@ H.group('Positionsgraph — wo eine Kante ansetzt');
   H.eq('Rueckkante startet an der Oberkante', r1(rauf.s.y), r1(186 - PG.BOX_H / 2));
   H.eq('Rueckkante endet unter dem Ziel', r1(rauf.e.y), r1(108 + PG.BOX_H / 2 + 3));
   H.check('Rueckkante ist gebogen', rauf.d.indexOf('Q') > 0, rauf.d);
+
+  // Die Tokenzeichen bekommen im Bild eine eigene, mattere Farbe, also muessen
+  // sie sich sauber vom Zustandsnamen trennen lassen.
+  const teile = PG.splitTokens('q₀:■ q₁:●●');
+  H.eq('Beschriftung zerfaellt in vier Stuecke', String(teile.length), '4');
+  H.eq('erst der Name', teile[0].s + String(teile[0].tok), 'q₀:false');
+  H.eq('dann das Tokenstueck', teile[1].s + String(teile[1].tok), '■true');
+  H.eq('das letzte Stueck sind beide Punkte', teile[3].s + String(teile[3].tok), '●●true');
+  H.eq('ohne Token bleibt ein Stueck', String(PG.splitTokens('(leer)').length), '1');
 }
 
 H.group('1-VA-Validierung lehnt Untaugliches ab');

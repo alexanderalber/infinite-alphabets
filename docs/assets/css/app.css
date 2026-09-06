@@ -607,6 +607,13 @@ svg.graph .pg-box-inner { fill: none; stroke: var(--tool-danger-border); stroke-
    dann bleiben sie auch zusammen lesbar. */
 svg.graph .pg-node.hl .pg-box { stroke: var(--accent); stroke-width: 2.4; }
 svg.graph .pg-label { font-size: 12px; fill: var(--tool-emph); font-family: var(--mono); }
+/* Die Tokenzeichen tragen eine Zahl, keine Betonung. In --tool-emph stehen sie
+   in Hell als volles Schwarz und in Dunkel als volles Weiss im Bild und
+   erschlagen die Kaesten und die Tabelle; im grauen Skin faellt das nicht auf,
+   weil dort die Seitenfarbe in der Mitte liegt. Ein Mittelton stellt denselben
+   Eindruck in allen drei Skins her, ohne die Zeichen zaehlbar zu machen. */
+svg.graph .pg-tok { fill: var(--tool-label); }
+.tok { color: var(--tool-label); }
 svg.graph .pg-node.is-clickable { cursor: pointer; }
 svg.graph .pg-node.is-clickable:hover .pg-box { stroke: var(--accent); stroke-width: 2.2; }
 svg.graph .pg-edge { fill: none; stroke: var(--edge); stroke-width: 1.2; }

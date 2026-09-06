@@ -126,7 +126,7 @@
           rx: 2, class: 'pg-box-inner'
         }));
       }
-      g.appendChild(el('text', { 'text-anchor': 'middle', dy: '0.35em', class: 'pg-label' }, it.label));
+      g.appendChild(posLabel(el, it.label));
       const title = el('title');
       title.textContent = (it.node.word.length ? it.node.word.join('') : 'ε');
       g.appendChild(title);
@@ -138,6 +138,29 @@
 
     D.fitViewBox(svg, L.width, L.height);
     return L;
+  }
+
+  // Die Beschriftung eines Kastens als <text> mit eigenen <tspan> fuer die
+  // Tokenzeichen: die Zeichen ● und ■ sollen matter stehen als der Zustandsname,
+  // sonst tragen sie in Hell und Dunkel das ganze Bild. Die Farbe steht in
+  // app.css, hier wird nur getrennt.
+  function posLabel(el, label) {
+    const t = el('text', { 'text-anchor': 'middle', dy: '0.35em', class: 'pg-label' });
+    for (const part of splitTokens(label)) {
+      if (part.tok) t.appendChild(el('tspan', { class: 'pg-tok' }, part.s));
+      else t.appendChild(el('tspan', null, part.s));
+    }
+    return t;
+  }
+
+  // Zerlegt "q₀:■ q₁:●●" in Namens- und Tokenstuecke. Ohne DOM, damit der
+  // Node-Test sie nachrechnen kann.
+  function splitTokens(label) {
+    const parts = [];
+    for (const s of String(label).split(/([●■]+)/)) {
+      if (s) parts.push({ s: s, tok: /^[●■]+$/.test(s) });
+    }
+    return parts;
   }
 
   function drawEdge(el, gEdges, gLabels, a, b, label, hot) {
@@ -219,6 +242,7 @@
   }
 
   root.PosGraph = {
+    splitTokens: splitTokens,
     render: render, layout: layout, edgeGeometry: edgeGeometry, viaLabel: viaLabel,
     MAX_NODES: MAX_NODES, BOX_H: BOX_H
   };
