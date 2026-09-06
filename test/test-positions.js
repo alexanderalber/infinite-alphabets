@@ -215,6 +215,38 @@ H.group('V bleibt akzeptierend, auch gepumpt');
   }
 }
 
+// Reine Geometrie, deshalb ohne Browser pruefbar. Der Fall, der den Umbau
+// ausgeloest hat: eine Kante zum Nachbarn derselben Ebene setzte oben am
+// eigenen Kasten an und lief quer darueber hinweg.
+H.group('Positionsgraph — wo eine Kante ansetzt');
+{
+  const PG = globalThis.PosGraph;
+  const r1 = function (v) { return Math.round(v * 10) / 10; };
+  const oben = { x: 0, y: 108, w: 70 };
+  const links = { x: -58.2, y: 186, w: 138 };
+  const rechts = { x: 77.2, y: 186, w: 92 };
+
+  const quer = PG.edgeGeometry(rechts, links);
+  H.eq('Querkante startet auf halber Hoehe', r1(quer.s.y), 186);
+  H.eq('Querkante startet an der linken Kante', r1(quer.s.x), r1(77.2 - 46));
+  H.eq('Querkante endet an der rechten Kante des Ziels', r1(quer.e.x), r1(-58.2 + 69 + 3));
+  H.check('Querkante ist gebogen', quer.d.indexOf('Q') > 0, quer.d);
+  H.check('Bogen der Querkante geht nach oben', quer.label.y < 186, String(quer.label.y));
+
+  const runter = PG.edgeGeometry(oben, links);
+  H.eq('Kante nach unten startet an der Unterkante', r1(runter.s.y), r1(108 + PG.BOX_H / 2));
+  H.check('und faechert zum Ziel hin auf',
+    runter.s.x < oben.x && runter.s.x > oben.x - oben.w / 2, String(runter.s.x));
+  H.eq('Kante nach unten endet vor der Oberkante des Ziels',
+    r1(runter.e.y), r1(186 - PG.BOX_H / 2 - 3));
+  H.check('Kante nach unten ist gerade', runter.d.indexOf('Q') < 0, runter.d);
+
+  const rauf = PG.edgeGeometry(rechts, oben);
+  H.eq('Rueckkante startet an der Oberkante', r1(rauf.s.y), r1(186 - PG.BOX_H / 2));
+  H.eq('Rueckkante endet unter dem Ziel', r1(rauf.e.y), r1(108 + PG.BOX_H / 2 + 3));
+  H.check('Rueckkante ist gebogen', rauf.d.indexOf('Q') > 0, rauf.d);
+}
+
 H.group('1-VA-Validierung lehnt Untaugliches ab');
 const notVA = Au.parseDSL('theory reals\nstates q0\ninitial q0\naccepting q0\nq0 -> q0 : x < y');
 H.eq('reelle Theorie abgelehnt', String(P.analyze(notVA).ok), 'false');

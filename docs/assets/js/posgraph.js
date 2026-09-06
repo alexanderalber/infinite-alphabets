@@ -145,20 +145,72 @@
       gLabels.appendChild(el('text', { x: x + 38, y: y + 4, class: 'pg-edge-label' }, label));
       return;
     }
-    const down = b.y > a.y;
-    const x1 = a.x, y1 = a.y + (down ? BOX_H / 2 : -BOX_H / 2);
-    const x2 = b.x, y2 = b.y + (down ? -BOX_H / 2 - 2 : BOX_H / 2 + 2);
-    // Rueck- und Querkanten biegen, damit sie nicht durch die Kaesten laufen.
-    const bend = (b.y === a.y || !down) ? 26 : 0;
-    const mx = (x1 + x2) / 2 + bend, my = (y1 + y2) / 2;
-    const d = bend
-      ? 'M ' + x1 + ' ' + y1 + ' Q ' + (mx + bend) + ' ' + my + ' ' + x2 + ' ' + y2
-      : 'M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2;
-    gEdges.appendChild(el('path', { d: d, class: cls, 'marker-end': 'url(#pg-arrow)' }));
+    const g = edgeGeometry(a, b);
+    gEdges.appendChild(el('path', { d: g.d, class: cls, 'marker-end': 'url(#pg-arrow)' }));
     gLabels.appendChild(el('text', {
-      x: mx + (bend ? 8 : 6), y: my, class: 'pg-edge-label'
+      x: g.label.x, y: g.label.y, 'text-anchor': g.label.anchor, class: 'pg-edge-label'
     }, label));
   }
 
-  root.PosGraph = { render: render, layout: layout, viaLabel: viaLabel, MAX_NODES: MAX_NODES, BOX_H: BOX_H };
+  // Geometrie einer Kante zwischen zwei Kaesten, ohne DOM: Ansatzpunkte, Pfad
+  // und Stelle der Beschriftung. Ausgelagert, damit der Node-Test sie
+  // nachrechnen kann, statt sie nur im Bild zu sehen.
+  function edgeGeometry(a, b) {
+    // Angesetzt wird auf dem Rand des Kastens in Richtung des Ziels, nicht in
+    // der Mitte der Ober- oder Unterkante: sonst startet eine Kante zum Nachbarn
+    // derselben Ebene oben am eigenen Kasten und laeuft quer darueber. So
+    // verlaesst sie ihn seitlich, und die Kanten nach unten faechern auf, statt
+    // sich alle in einem Punkt zu draengen.
+    const s = borderPoint(a, b.x, b.y, 0);
+    const e = borderPoint(b, a.x, a.y, 3);   // Platz fuer die Pfeilspitze
+    const dx = e.x - s.x, dy = e.y - s.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    // Rueck- und Querkanten biegen, damit sie nicht durch die Kaesten dazwischen
+    // laufen. Der Versatz steht senkrecht auf der Verbindung, nicht in
+    // x-Richtung: bei einer Kante innerhalb einer Ebene laege ein x-versetzter
+    // Kontrollpunkt genau auf der Geraden, das gaebe keinen Bogen, sondern eine
+    // schiefe Linie. Gebogen wird immer nach rechts der Laufrichtung, bei den
+    // Querkanten nach links ist das oben. Das Mass ist der Abstand der
+    // Ansatzpunkte, nicht der der Mittelpunkte: zwei Kaesten derselben Ebene
+    // stehen mit ihren Raendern nur wenige Pixel auseinander, ein fester
+    // Versatz liesse die Kante ueber ihren eigenen Kasten zurueckschwingen.
+    const bend = b.y > a.y ? 0 : Math.min(22, len / 2.5);
+    const mx = (s.x + e.x) / 2 + nx * bend;
+    const my = (s.y + e.y) / 2 + ny * bend;
+    // Beschriftung an der Mitte des tatsaechlichen Pfades, seitlich weggerueckt.
+    // Beim Bogen nach aussen und zentriert: eine Querkante hat zwischen ihren
+    // Kaesten nur wenige Pixel Platz, linksbuendig stiesse die Beschriftung an
+    // den Kasten, von dem sie ausgeht. Die Gerade behaelt die Beschriftung
+    // rechts der Laufrichtung, also neben der Linie statt darauf.
+    const cx = bend ? 0.25 * s.x + 0.5 * mx + 0.25 * e.x : (s.x + e.x) / 2;
+    const cy = bend ? 0.25 * s.y + 0.5 * my + 0.25 * e.y : (s.y + e.y) / 2;
+    const off = bend ? 12 : -10;
+    return {
+      s: s, e: e, bend: bend,
+      d: bend
+        ? 'M ' + s.x + ' ' + s.y + ' Q ' + mx + ' ' + my + ' ' + e.x + ' ' + e.y
+        : 'M ' + s.x + ' ' + s.y + ' L ' + e.x + ' ' + e.y,
+      label: {
+        x: cx + off * nx + (bend ? 0 : 4), y: cy + off * ny + 4,
+        anchor: bend ? 'middle' : 'start'
+      }
+    };
+  }
+
+  // Punkt auf dem Rand des Kastens in Richtung (tx, ty), mit optionalem Abstand
+  // davor. Der Kasten ist ein Rechteck, also entscheidet, welche Halbachse
+  // zuerst erreicht wird: die kleinere der beiden Streckungen.
+  function borderPoint(it, tx, ty, pad) {
+    const dx = tx - it.x, dy = ty - it.y;
+    if (!dx && !dy) return { x: it.x, y: it.y };
+    const hw = it.w / 2 + (pad || 0), hh = BOX_H / 2 + (pad || 0);
+    const t = Math.min(dx ? hw / Math.abs(dx) : Infinity, dy ? hh / Math.abs(dy) : Infinity);
+    return { x: it.x + dx * t, y: it.y + dy * t };
+  }
+
+  root.PosGraph = {
+    render: render, layout: layout, edgeGeometry: edgeGeometry, viaLabel: viaLabel,
+    MAX_NODES: MAX_NODES, BOX_H: BOX_H
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
