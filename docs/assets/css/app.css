@@ -336,17 +336,28 @@ button:disabled,
 button:focus-visible,
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+/* Rolle: die gefuellte Akzentflaeche (Hauptknopf, geoeffnetes i). Im hellen
+   Skin ist --accent ein sehr dunkles Blau, entworfen als Schriftfarbe fuer
+   Links. Als Flaeche wird daraus ein fast schwarzer Block: Kontrast zur Seite
+   etwa 12:1, waehrend derselbe Knopf in Dunkel und Grau in einem Mittelton bei
+   etwa 6:1 steht. Hell nimmt deshalb die Hover-Stufe als Ruhezustand und geht
+   beim Hover nach unten statt nach oben, weil mehr Betonung auf hellem Grund
+   dunkler heisst und nicht heller. Kein neuer Farbwert, nur die beiden
+   vorhandenen Stufen getauscht. */
+:root { --accent-fill: var(--accent); --accent-fill-hover: var(--accent-hover); }
+html[data-theme="light"] { --accent-fill: var(--accent-hover); --accent-fill-hover: var(--accent); }
+
 button.primary,
 .btn.primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--tool-ink);
-  border-color: var(--accent);
+  border-color: var(--accent-fill);
   font-weight: 600;
 }
 button.primary:hover:not(:disabled),
 .btn.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: var(--accent-fill-hover);
+  border-color: var(--accent-fill-hover);
   color: var(--tool-ink);
 }
 
@@ -760,8 +771,8 @@ button.info-btn:hover:not(:disabled) {
 }
 button.info-btn[aria-expanded="true"] {
   color: var(--tool-ink);
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 .info-box {
   position: absolute;
