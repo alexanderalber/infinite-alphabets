@@ -65,11 +65,28 @@ const base = catalog.concat(families);
 const parts = [];
 let skipped = 0;
 
+// Die Praeambel des Testdokuments wird nicht hier festgelegt, sondern aus den
+// Exporten gelesen: jeder Export nennt als Kommentar, was er braucht. Damit
+// prueft der Lauf genau die Angabe, die der Nutzer beim Einfuegen befolgt.
+// Faellt dort eine Bibliothek weg, kennt tikz die Schluessel nicht mehr und die
+// Uebersetzung meldet es, statt still ein unvollstaendiges Bild zu liefern.
+const pkgs = new Set();
+const libs = new Set();
+
+function collectPreamble(title, tex) {
+  const p = tex.match(/^%\s+\\usepackage\{([^}]*)\}$/gm) || [];
+  const l = tex.match(/^%\s+\\usetikzlibrary\{([^}]*)\}$/gm) || [];
+  for (const m of p) pkgs.add(m.replace(/.*\{|\}.*/g, ''));
+  for (const m of l) for (const one of m.replace(/.*\{|\}.*/g, '').split(',')) libs.add(one.trim());
+  return p.length > 0;
+}
+
 function addAutomaton(title, A) {
   if (A.states.length > MAX_STATES) { skipped++; return; }
   let tex;
   try { tex = Tz.exportTikz(A, { title: title }); }
   catch (err) { H.check(title + ': exportiert', false, err.message); return; }
+  collectPreamble(title, tex);
   parts.push('\\section*{' + title.replace(/[_&%#]/g, '\\$&') + '}\n' + tex);
 }
 
@@ -117,6 +134,11 @@ for (const [id, A] of base) {
     let tex;
     try { tex = Tz.exportPositionGraph(res, PG.layout(res), { title: id }); }
     catch (err) { H.check(id + ' Tiefe ' + d + ': Positionsgraph exportiert', false, err.message); continue; }
+    if (posCount === 0) {
+      H.check('Positionsgraph nennt seine Praeambel', collectPreamble(id, tex), tex.slice(0, 200));
+    } else {
+      collectPreamble(id, tex);
+    }
     parts.push('\\section*{' + id.replace(/[_&%#]/g, '\\$&') + ', Positionen, Tiefe ' + d + '}\n' + tex);
     posCount++;
   }
@@ -129,16 +151,19 @@ console.log('   ' + parts.length + ' Bilder (' + posCount + ' Positionsgraphen, 
 
 // ---------- Uebersetzen ----------
 
+// Die Automaten nennen automata und arrows, der Positionsgraph amssymb. Nichts
+// davon wird hier ergaenzt: was nicht im Export steht, fehlt auch im Testlauf.
+H.check('Automatenexport nennt die automata-Bibliothek', libs.has('automata'), Array.from(libs).join(','));
+H.check('Positionsexport nennt amssymb', pkgs.has('amssymb'), Array.from(pkgs).join(','));
+
 const doc = [
   '\\documentclass{article}',
-  '\\usepackage[a1paper,margin=1cm]{geometry}',
-  '\\usepackage{amssymb}',
-  '\\usepackage{tikz}',
-  '\\usetikzlibrary{automata,positioning,arrows}',
-  '\\begin{document}',
-  parts.join('\n\n\\bigskip\n\n'),
-  '\\end{document}'
-].join('\n');
+  '\\usepackage[a1paper,margin=1cm]{geometry}'
+].concat(
+  Array.from(pkgs).map(function (p) { return '\\usepackage{' + p + '}'; }),
+  libs.size ? ['\\usetikzlibrary{' + Array.from(libs).join(',') + '}'] : [],
+  ['\\begin{document}', parts.join('\n\n\\bigskip\n\n'), '\\end{document}']
+).join('\n');
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ia-tikz-'));
 const src = path.join(dir, 'all.tex');

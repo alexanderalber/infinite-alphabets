@@ -40,6 +40,18 @@
     return 'n' + String(name).replace(/[^A-Za-z0-9]/g, '_');
   }
 
+  // Der Export ist ein Schnipsel, der in ein fremdes Dokument wandert, und er
+  // haengt an Bibliotheken, die dort nicht geladen sein muessen. Fehlt etwa
+  // 'automata', dann kennt tikz die Schluessel state, initial und accepting
+  // nicht, ignoriert sie und zeichnet die Zustaende als blanken Text ohne Kreis.
+  // LaTeX meldet das zwar, erzeugt aber trotzdem ein PDF, in dem nur etwas fehlt.
+  // Deshalb steht die noetige Praeambel als Kommentar im Export.
+  function preamble(lines, pkgs, libs) {
+    lines.push('% Benoetigt in der Praeambel:');
+    for (const p of pkgs) lines.push('%   \\usepackage{' + p + '}');
+    if (libs.length) lines.push('%   \\usetikzlibrary{' + libs.join(',') + '}');
+  }
+
   function classOf(A, q) {
     const hasC = A.complement.length > 0;
     if (A.accepting.indexOf(q) >= 0) return 'accepting,fill=red!30';
@@ -64,6 +76,7 @@
     const pos = Au.layoutOf(A);
     const lines = [];
     lines.push('% ' + (opts.title || 'Automat') + ', erzeugt von infinite-alphabets');
+    preamble(lines, ['tikz'], ['automata', 'arrows']);
     lines.push('\\begin{tikzpicture}[->, >=stealth\', auto, semithick, node distance=2.5cm]');
     lines.push('\\tikzstyle{every state}=[fill=white,draw=black,thick,text=black,scale=0.8]');
 
@@ -135,6 +148,7 @@
     const px = opts.unit === undefined ? 62 : opts.unit; // Pixel je Zentimeter
     const lines = [];
     lines.push('% ' + (opts.title || 'Positionsgraph') + ', erzeugt von infinite-alphabets');
+    preamble(lines, ['amssymb', 'tikz'], []);
     lines.push('\\begin{tikzpicture}[->, >=stealth\', auto, semithick]');
     // Der Stilname darf nicht 'pos' sein: das ist ein eingebauter tikz-Schluessel
     // (Lage eines Knotens auf einem Pfad), der einen Wert verlangt. Ein Knoten mit
