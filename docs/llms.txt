@@ -1,0 +1,27 @@
+# infinite alphabets
+
+> Interactive playground for parametrized automata (PA) and variable automata (VA) over infinite alphabets, accompanying two papers by Franziska Alber and Philipp Rümmer. The examples from both papers are built in and can be recomputed, and your own automata can be entered in a small textual language. Everything runs client-side: no build step, no external resources, no ES modules, so the pages work directly from the file system over file://.
+
+The pages are bilingual English/German (English is the default, switch with `?lang=en` / `?lang=de`) and have three themes (light, dark, grey).
+
+The two papers: *Complementable Normal Form of Parametrized Automata* (CIAA 2025) and *Universality of 1-Variable Automata is Decidable* (ATVA 2026, to appear), both by Franziska Alber and Philipp Rümmer. This site is an independent implementation of the papers, not a supplement published with them.
+
+## Pages
+
+- [Landing page](https://alber.me/infinite-alphabets/): One section per paper with its abstract, and a pointer to the tool that belongs to it.
+- [PA playground](https://alber.me/infinite-alphabets/playground.html): Belongs to the CIAA paper. Enter automata in a small textual language or load the paper's examples, simulate words step by step, and read off the corresponding parameter sets, computed exactly. The operations of the paper are available as buttons: synchronized product, intersection, union, complement of a CFPA, completion, the largest F_c. Checks for emptiness, determinism per assignment, CFPA consistency and the Skolem condition, a graph showing the three kinds of states, and a TikZ export in the style of the papers. Two extra views: a number line that shows a word as a sequence of points with the assignment y as a draggable mark, and a language map that tiles all words up to a chosen length, one word per tile.
+- [Positions and tokens](https://alber.me/infinite-alphabets/positions.html): Belongs to the ATVA paper and makes its central proof idea visible. Letter by letter, tokens travel through the automaton, a round one per letter of the word and a square one for all assignments that do not occur in the word. The position vector is carried along, as are the matrices M and B that describe the successor. A breadth-first search explores the position space up to a chosen depth and reports whether a word without an accepting state has shown up.
+- [Semantics](https://alber.me/infinite-alphabets/semantics.html): What exactly is computed, and where the limits are. The definitions follow the papers rather than the conventions of a library.
+
+## What is exact and what is not
+
+Membership, parameter sets, runs, emptiness, determinism per assignment and the product constructions are exact, computed over the rationals with fractions rather than floating point.
+
+Everything that quantifies over *all* words (universality, the CFPA property, the Skolem condition, SDPA, equivalence) is only checked up to a length bound, and is labelled as such in the interface. A counterexample that is found is exact; the absence of a counterexample is not a proof. Universality of PA is undecidable; for 1-VA it is decidable, but Ackermann-hard and not implemented here. The same bound applies to the language map: each individual tile is exact, the map as a whole ends at the configured length and says nothing about longer words.
+
+Limits of this version: exactly one parameter over the reals (several would need polyhedra instead of intervals), no epsilon transitions, and the largest F_c only in the equality theory.
+
+## Related
+
+- [Repository](https://github.com/alexanderalber/infinite-alphabets): Public source of the pages under `docs/`.
+- [transformer-twin-lab](https://alber.me/transformer-twin-lab/) ([llms.txt](https://alber.me/transformer-twin-lab/llms.txt)): Sister project on the same domain, on digital twins of power transformers. Unrelated subject, mutually linked.
